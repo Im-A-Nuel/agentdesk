@@ -1,5 +1,11 @@
 export type CategoryId = "rebalancing" | "grid_trading" | "yield" | "health_factor";
 
+export type AllowlistEntry = {
+  label: string;
+  address: string;
+  symbol?: string;
+};
+
 export type Agent = {
   id: string;
   name: string;
@@ -14,7 +20,7 @@ export type Agent = {
   successRate: number;
   feeBps: number;
   medianRuntime: string;
-  allowlist: { label: string; address: string }[];
+  allowlist: AllowlistEntry[];
   capabilities: string[];
   activity: { label: string; value: string }[];
   registeredAt: string;
@@ -73,10 +79,10 @@ export function categoryDotClass(id: CategoryId): string {
   }
 }
 
-const pancake = { label: "PancakeSwap Router v3", address: "0x1b81D678ffb9C0263b24A97847620C99d213eB14" };
-const venus = { label: "Venus Comptroller", address: "0xfD36E2c2a6789Db23113685031d7F16329158384" };
-const wbnb = { label: "WBNB", address: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c" };
-const usdt = { label: "USDT", address: "0x55d398326f99059fF775485246999027B3197955" };
+const pancake: AllowlistEntry = { label: "PancakeSwap Router v3", address: "0x1b81D678ffb9C0263b24A97847620C99d213eB14" };
+const venus: AllowlistEntry = { label: "Venus Comptroller", address: "0xfD36E2c2a6789Db23113685031d7F16329158384" };
+const wbnb: AllowlistEntry = { label: "WBNB", address: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", symbol: "WBNB" };
+const usdt: AllowlistEntry = { label: "USDT", address: "0x55d398326f99059fF775485246999027B3197955", symbol: "USDT" };
 
 export const agents: Agent[] = [
   {

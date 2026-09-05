@@ -21,6 +21,7 @@ import { Slider } from "@/components/ui/slider";
 import { Reveal } from "@/components/site/reveal";
 import { Shell } from "@/components/site/layout";
 import { CopyButton } from "@/components/site/copy-button";
+import { TokenIcon } from "@/components/site/token-icon";
 import { agents, categoryBadgeClass, categoryLabel, shortAddress, usd, type Agent } from "@/lib/agents";
 import { createHire, type HireResult } from "@/lib/api";
 
@@ -178,7 +179,10 @@ export function AgentDetail({ agent }: { agent: Agent }) {
               <ul className="mt-5 divide-y divide-border">
                 {agent.allowlist.map((c) => (
                   <li key={c.address} className="flex items-center justify-between gap-4 py-3.5">
-                    <span className="text-sm">{c.label}</span>
+                    <span className="flex items-center gap-2.5 text-sm">
+                      <TokenIcon symbol={c.symbol} className="h-6 w-6" />
+                      {c.label}
+                    </span>
                     <span className="num flex items-center gap-2 text-[11px] text-muted-foreground">
                       <a
                         href={`${EXPLORER}/address/${c.address}`}
