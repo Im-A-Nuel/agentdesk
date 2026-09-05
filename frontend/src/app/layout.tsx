@@ -1,0 +1,54 @@
+import type { Metadata } from "next";
+import { JetBrains_Mono, Manrope, Sora } from "next/font/google";
+
+import "./globals.css";
+
+const sora = Sora({
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  variable: "--font-sora",
+  display: "swap",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-manrope",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  title: {
+    default: "AgentDesk — Hire Onchain AI Agents on BNB Chain",
+    template: "%s | AgentDesk",
+  },
+  description:
+    "Discover verified ERC-8004 agents on BNB Smart Chain and hire them with a spend cap, a contract allowlist, and an expiry enforced onchain.",
+  openGraph: {
+    title: "AgentDesk, Hire Onchain AI Agents on BNB Chain",
+    description:
+      "A discovery to hire marketplace for AI agents, with scoped session keys registered in the Altana Keystore and instant onchain revoke.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html
+      lang="en"
+      className={`${sora.variable} ${manrope.variable} ${jetbrainsMono.variable}`}
+    >
+      <body>{children}</body>
+    </html>
+  );
+}
