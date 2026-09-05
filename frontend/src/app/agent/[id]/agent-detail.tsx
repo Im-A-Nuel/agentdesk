@@ -77,13 +77,12 @@ export function AgentDetail({ agent }: { agent: Agent }) {
     <Shell>
       <div className="border-b border-border">
         <div className="mx-auto max-w-[1240px] px-5 pt-10 pb-14">
-          <Link
-            href="/"
-            className="num inline-flex items-center gap-2 text-[11px] tracking-[0.14em] text-muted-foreground uppercase transition-colors duration-300 hover:text-brass"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Back to marketplace
-          </Link>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/marketplace">
+              <ArrowLeft />
+              Back to marketplace
+            </Link>
+          </Button>
 
           <Reveal className="mt-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -204,7 +203,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                     <Link
                       key={r.id}
                       href={`/agent/${r.id}`}
-                      className="panel hairline-hover p-5"
+                      className="glass-card hairline-hover p-5"
                     >
                       <div className="flex items-center justify-between">
                         <h3 className="font-display text-base font-semibold">{r.name}</h3>

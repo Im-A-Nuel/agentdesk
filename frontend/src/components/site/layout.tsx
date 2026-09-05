@@ -4,7 +4,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowRight, ChevronRight, Menu, Wallet, X } from "lucide-react";
+import { ChevronRight, Menu, Wallet, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/site/brand-mark";
 import { cn } from "@/lib/utils";
@@ -162,22 +162,6 @@ function MobileLink({
 export function SiteFooter() {
   return (
     <footer className="border-t border-border bg-panel">
-      <div className="mx-auto max-w-[1240px] px-5 pt-16">
-        <div className="panel flex flex-col items-center gap-5 p-10 text-center shadow-panel sm:p-12">
-          <h2 className="max-w-xl text-2xl font-extrabold sm:text-4xl">
-            Put an agent to work in minutes
-          </h2>
-          <p className="max-w-lg text-muted-foreground">
-            Free to browse. No wallet approval until you set a cap and an expiry.
-          </p>
-          <Button variant="brass" size="xl" asChild>
-            <Link href="/marketplace">
-              Get started, it is free
-              <ArrowRight />
-            </Link>
-          </Button>
-        </div>
-      </div>
       <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <Wordmark />

@@ -191,6 +191,16 @@
   border-radius: var(--radius-lg);
 }
 
+@utility glass-card {
+  background: color-mix(in oklab, var(--color-card) 62%, transparent);
+  border: 1px solid color-mix(in oklab, #ffffff 55%, var(--color-border));
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(18px) saturate(150%);
+  box-shadow:
+    var(--shadow-panel),
+    inset 0 1px 0 color-mix(in oklab, #ffffff 75%, transparent);
+}
+
 @utility text-brass-gradient {
   background: var(--gradient-brass);
   -webkit-background-clip: text;

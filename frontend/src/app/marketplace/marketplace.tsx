@@ -99,12 +99,20 @@ export function Marketplace() {
         </div>
       </section>
 
-      <section className="border-b border-border bg-panel">
-        <div className="mx-auto max-w-[1240px] px-5 py-14">
+      <section className="relative overflow-hidden border-b border-border bg-panel">
+        <div
+          className="pointer-events-none absolute -top-28 left-[12%] h-96 w-96 rounded-full opacity-[0.12] blur-[120px]"
+          style={{ background: "var(--gradient-brass)" }}
+        />
+        <div
+          className="pointer-events-none absolute top-1/2 right-[8%] h-80 w-80 rounded-full opacity-[0.09] blur-[110px]"
+          style={{ background: "var(--gradient-brass)" }}
+        />
+        <div className="relative mx-auto max-w-[1240px] px-5 py-14">
           {loading && (
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="panel h-64 animate-pulse" />
+                <div key={i} className="glass-card h-64 animate-pulse" />
               ))}
             </div>
           )}
