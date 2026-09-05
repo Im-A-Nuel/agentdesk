@@ -1,9 +1,10 @@
 "use client";
 
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowRight, ChevronRight, Terminal, Wallet } from "lucide-react";
+import { ArrowRight, ChevronRight, Menu, Terminal, Wallet, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -18,15 +19,13 @@ export function Wordmark() {
   );
 }
 
-const nav = [
-  { label: "Marketplace", href: "/" },
-  { label: "Dashboard", href: "/dashboard" },
-];
+const navLinkClass =
+  "rounded-full px-3.5 py-2 text-foreground/70 transition-colors duration-300 hover:bg-accent hover:text-foreground";
 
 export function AnnouncementBar() {
   return (
-    <a
-      href="#marketplace"
+    <Link
+      href={{ pathname: "/", hash: "marketplace" }}
       className="group flex items-center justify-center gap-2 border-b border-border bg-panel px-5 py-2.5 text-center text-[13px] font-semibold"
     >
       <span className="text-brass">NEW</span>
@@ -34,13 +33,36 @@ export function AnnouncementBar() {
         Scoped session keys are live. Hire an agent with a cap you set.
       </span>
       <ChevronRight className="h-3.5 w-3.5 transition-transform duration-300 ease-instrument group-hover:translate-x-1" />
-    </a>
+    </Link>
+  );
+}
+
+function ConnectWalletButton() {
+  return (
+    <ConnectButton.Custom>
+      {({ account, chain, openAccountModal, openConnectModal, mounted }) => {
+        const ready = mounted;
+        const connected = ready && account && chain;
+        return (
+          <Button
+            variant={connected ? "outline" : "brass"}
+            size="sm"
+            className={connected ? "num" : ""}
+            disabled={!ready}
+            onClick={connected ? openAccountModal : openConnectModal}
+          >
+            <Wallet />
+            {connected ? account.displayName : "Connect wallet"}
+          </Button>
+        );
+      }}
+    </ConnectButton.Custom>
   );
 }
 
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
-  const [connected, setConnected] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -49,6 +71,8 @@ export function SiteHeader() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <header
@@ -63,30 +87,24 @@ export function SiteHeader() {
         <div className="flex items-center gap-9">
           <Wordmark />
           <nav className="hidden items-center gap-1 text-[14px] font-semibold md:flex">
-            {nav.map((n) => (
-              <Link
-                key={n.href}
-                href={n.href}
-                className={cn(
-                  "rounded-full px-3.5 py-2 text-foreground/70 transition-colors duration-300 hover:bg-accent hover:text-foreground",
-                  pathname === n.href && "text-foreground",
-                )}
-              >
-                {n.label}
-              </Link>
-            ))}
-            <a
-              href="#how-it-works"
-              className="rounded-full px-3.5 py-2 text-foreground/70 transition-colors duration-300 hover:bg-accent hover:text-foreground"
+            <Link
+              href="/"
+              className={cn(navLinkClass, pathname === "/" && "text-foreground")}
             >
+              Marketplace
+            </Link>
+            <Link
+              href="/dashboard"
+              className={cn(navLinkClass, pathname === "/dashboard" && "text-foreground")}
+            >
+              Dashboard
+            </Link>
+            <Link href={{ pathname: "/", hash: "how-it-works" }} className={navLinkClass}>
               How it works
-            </a>
-            <a
-              href="#pricing"
-              className="rounded-full px-3.5 py-2 text-foreground/70 transition-colors duration-300 hover:bg-accent hover:text-foreground"
-            >
+            </Link>
+            <Link href={{ pathname: "/", hash: "pricing" }} className={navLinkClass}>
               Pricing
-            </a>
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-2.5">
@@ -94,18 +112,58 @@ export function SiteHeader() {
             <span className="pulse-live h-1.5 w-1.5 rounded-full bg-live" />
             BSC TESTNET
           </span>
-          <Button
-            variant={connected ? "outline" : "brass"}
-            size="sm"
-            className={connected ? "num" : ""}
-            onClick={() => setConnected((c) => !c)}
+          <ConnectWalletButton />
+          <button
+            type="button"
+            aria-label="Toggle menu"
+            aria-expanded={menuOpen}
+            className="grid h-10 w-10 cursor-pointer place-items-center rounded-full border border-border text-foreground/80 transition-colors duration-300 hover:bg-accent md:hidden"
+            onClick={() => setMenuOpen((o) => !o)}
           >
-            <Wallet />
-            {connected ? "0x7a3f...2d63" : "Connect wallet"}
-          </Button>
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
       </div>
+
+      {menuOpen && (
+        <div className="border-t border-border bg-background px-5 py-4 md:hidden">
+          <nav className="flex flex-col gap-1 text-[15px] font-semibold">
+            <MobileLink href="/" onNavigate={closeMenu}>
+              Marketplace
+            </MobileLink>
+            <MobileLink href="/dashboard" onNavigate={closeMenu}>
+              Dashboard
+            </MobileLink>
+            <MobileLink href={{ pathname: "/", hash: "how-it-works" }} onNavigate={closeMenu}>
+              How it works
+            </MobileLink>
+            <MobileLink href={{ pathname: "/", hash: "pricing" }} onNavigate={closeMenu}>
+              Pricing
+            </MobileLink>
+          </nav>
+        </div>
+      )}
     </header>
+  );
+}
+
+function MobileLink({
+  href,
+  onNavigate,
+  children,
+}: {
+  href: string | { pathname: string; hash?: string };
+  onNavigate: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onNavigate}
+      className="cursor-pointer rounded-lg px-3 py-2.5 text-foreground/75 transition-colors duration-300 hover:bg-accent hover:text-foreground"
+    >
+      {children}
+    </Link>
   );
 }
 
@@ -121,10 +179,10 @@ export function SiteFooter() {
             Free to browse. No wallet approval until you set a cap and an expiry.
           </p>
           <Button variant="brass" size="xl" asChild>
-            <a href="#marketplace">
+            <Link href={{ pathname: "/", hash: "marketplace" }}>
               Get started, it is free
               <ArrowRight />
-            </a>
+            </Link>
           </Button>
         </div>
       </div>

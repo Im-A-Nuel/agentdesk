@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono, Manrope, Sora } from "next/font/google";
 
+import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
+
+import { Web3Providers } from "@/components/web3-providers";
 
 const sora = Sora({
   subsets: ["latin"],
@@ -26,7 +29,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "AgentDesk — Hire Onchain AI Agents on BNB Chain",
+    default: "AgentDesk, Hire Onchain AI Agents on BNB Chain",
     template: "%s | AgentDesk",
   },
   description:
@@ -48,7 +51,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       className={`${sora.variable} ${manrope.variable} ${jetbrainsMono.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        <Web3Providers>{children}</Web3Providers>
+      </body>
     </html>
   );
 }

@@ -2,21 +2,27 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useAccount } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   CheckCircle2,
   Coins,
-  Copy,
   KeyRound,
   Layers,
+  Loader2,
   Lock,
   Timer,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Reveal } from "@/components/site/reveal";
 import { Shell } from "@/components/site/layout";
+import { CopyButton } from "@/components/site/copy-button";
 import { agents, categoryLabel, shortAddress, usd, type Agent } from "@/lib/agents";
+import { createHire, type HireResult } from "@/lib/api";
 
 const durations = [7, 14, 30, 90];
 
@@ -24,6 +30,11 @@ export function AgentDetail({ agent }: { agent: Agent }) {
   const [cap, setCap] = useState(2500);
   const [days, setDays] = useState(14);
   const [granted, setGranted] = useState(false);
+  const [hiring, setHiring] = useState(false);
+  const [hireError, setHireError] = useState<string | null>(null);
+  const [hireResult, setHireResult] = useState<HireResult | null>(null);
+  const { address, isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
 
   const related = useMemo(
     () => agents.filter((a) => a.category === agent.category && a.id !== agent.id).slice(0, 2),
@@ -34,6 +45,31 @@ export function AgentDetail({ agent }: { agent: Agent }) {
     const d = new Date(Date.now() + days * 86_400_000);
     return d.toISOString().slice(0, 10);
   }, [days]);
+
+  const handleHire = async () => {
+    if (!isConnected || !address) {
+      openConnectModal?.();
+      return;
+    }
+    setHiring(true);
+    setHireError(null);
+    try {
+      const { hire } = await createHire({
+        agentId: agent.id,
+        spendCap: cap,
+        durationSeconds: days * 86_400,
+        userWallet: address,
+      });
+      setHireResult(hire);
+      setGranted(true);
+      toast.success("Session registered onchain");
+    } catch (err) {
+      setHireError(err instanceof Error ? err.message : "Hire failed");
+      toast.error("Hire failed");
+    } finally {
+      setHiring(false);
+    }
+  };
 
   return (
     <Shell>
@@ -140,7 +176,7 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                     <span className="text-sm">{c.label}</span>
                     <span className="num flex items-center gap-2 text-[11px] text-muted-foreground">
                       {shortAddress(c.address)}
-                      <Copy className="h-3.5 w-3.5 opacity-60" />
+                      <CopyButton value={c.address} label={`Copy ${c.label} address`} />
                     </span>
                   </li>
                 ))}
@@ -207,6 +243,8 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                   onValueChange={(v) => {
                     setCap(v[0] ?? cap);
                     setGranted(false);
+                    setHireResult(null);
+                    setHireError(null);
                   }}
                 />
                 <p className="num mt-2 flex justify-between text-[10px] text-muted-foreground">
@@ -227,6 +265,8 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                       onClick={() => {
                         setDays(d);
                         setGranted(false);
+                        setHireResult(null);
+                        setHireError(null);
                       }}
                       className={`num cursor-pointer rounded-md border py-2 text-xs transition-all duration-300 ease-instrument ${
                         days === d
@@ -258,24 +298,41 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                 variant={granted ? "outline" : "brass"}
                 size="lg"
                 className="w-full"
-                onClick={() => setGranted(true)}
+                disabled={hiring || granted}
+                onClick={handleHire}
               >
-                {granted ? (
+                {hiring ? (
+                  <>
+                    <Loader2 className="animate-spin" />
+                    Creating session...
+                  </>
+                ) : granted ? (
                   <>
                     <Lock className="text-live" />
                     Session locked
                   </>
-                ) : (
+                ) : isConnected ? (
                   <>
                     <KeyRound />
                     Hire {agent.name}
                   </>
+                ) : (
+                  <>
+                    <Wallet />
+                    Connect wallet to hire
+                  </>
                 )}
               </Button>
 
+              {hireError && (
+                <p className="rounded-lg border border-destructive/40 bg-destructive/12 px-3 py-2 text-xs text-destructive">
+                  {hireError}
+                </p>
+              )}
+
               <div
                 className={`overflow-hidden transition-all duration-700 ease-instrument ${
-                  granted ? "max-h-64 opacity-100" : "max-h-0 opacity-0"
+                  granted ? "max-h-80 opacity-100" : "max-h-0 opacity-0"
                 }`}
               >
                 <div className="panel-inset space-y-2.5 p-4">
@@ -283,12 +340,25 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                     <span className="pulse-live h-1.5 w-1.5 rounded-full bg-live" />
                     Session registered in the Keystore
                   </p>
-                  <p className="num text-[10px] break-all text-muted-foreground">
-                    keystore 0x3f9a2c74be015d8a6cf42b71e09d3a5c81b7f26d4a0e93c5187bd6f204ac31e9b
-                  </p>
-                  <p className="num text-[10px] break-all text-muted-foreground">
-                    erc8183 0xa71c04ef52b9d386014c7fa2be95d073c184afb62e0d95713bc48f2a06de51c7
-                  </p>
+                  {hireResult && (
+                    <>
+                      <p className="num flex items-start gap-2 text-[10px] break-all text-muted-foreground">
+                        <span className="shrink-0">key</span>
+                        <span>{shortAddress(hireResult.sessionKeyAddress)}</span>
+                        <CopyButton value={hireResult.sessionKeyAddress} label="Copy session key" />
+                      </p>
+                      <p className="num flex items-start gap-2 text-[10px] break-all text-muted-foreground">
+                        <span className="shrink-0">keystore</span>
+                        <span>{hireResult.keystoreTxHash}</span>
+                        <CopyButton value={hireResult.keystoreTxHash} label="Copy keystore tx" />
+                      </p>
+                      <p className="num flex items-start gap-2 text-[10px] break-all text-muted-foreground">
+                        <span className="shrink-0">erc8183</span>
+                        <span>{hireResult.erc8183TxHash}</span>
+                        <CopyButton value={hireResult.erc8183TxHash} label="Copy ERC-8183 tx" />
+                      </p>
+                    </>
+                  )}
                   <Button variant="steel" size="sm" className="mt-1 w-full" asChild>
                     <Link href="/dashboard">Manage in dashboard</Link>
                   </Button>

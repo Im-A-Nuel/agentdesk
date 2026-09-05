@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  RefreshCw,
   ArrowRight,
   Check,
   ChevronRight,
@@ -19,7 +20,8 @@ import { Input } from "@/components/ui/input";
 import { AgentCard } from "@/components/site/agent-card";
 import { Reveal } from "@/components/site/reveal";
 import { Shell } from "@/components/site/layout";
-import { agents, categories, shortAddress, type CategoryId } from "@/lib/agents";
+import { agents, categories, shortAddress, type Agent, type CategoryId } from "@/lib/agents";
+import { getAgents } from "@/lib/api";
 
 const registryStats = [
   { label: "Agents in registry", value: "204,318" },
@@ -138,9 +140,30 @@ export default function Marketplace() {
   const [query, setQuery] = useState("");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
+  const [list, setList] = useState<Agent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { agents: data } = await getAgents();
+      setList(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load agents");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return agents.filter((a) => {
+    return list.filter((a) => {
       const matchCategory = active === "all" || a.category === active;
       const matchQuery =
         !q ||
@@ -149,7 +172,7 @@ export default function Marketplace() {
         a.tagline.toLowerCase().includes(q);
       return matchCategory && matchQuery;
     });
-  }, [active, query]);
+  }, [active, query, list]);
 
   return (
     <Shell>
@@ -378,15 +401,36 @@ export default function Marketplace() {
             </p>
           )}
 
-          <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((a, i) => (
-              <Reveal key={a.id} delay={i * 60}>
-                <AgentCard agent={a} />
-              </Reveal>
-            ))}
-          </div>
+          {loading && (
+            <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="panel h-64 animate-pulse" />
+              ))}
+            </div>
+          )}
 
-          {filtered.length === 0 && (
+          {!loading && error && (
+            <div className="panel mt-8 p-10 text-center">
+              <p className="text-sm font-semibold text-foreground">Agents could not be loaded</p>
+              <p className="mt-2 text-sm text-muted-foreground">{error}</p>
+              <Button variant="steel" size="sm" className="mt-5" onClick={load}>
+                <RefreshCw />
+                Try again
+              </Button>
+            </div>
+          )}
+
+          {!loading && !error && (
+            <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((a, i) => (
+                <Reveal key={a.id} delay={i * 60}>
+                  <AgentCard agent={a} />
+                </Reveal>
+              ))}
+            </div>
+          )}
+
+          {!loading && !error && filtered.length === 0 && (
             <div className="panel mt-8 p-10 text-center">
               <p className="text-sm text-muted-foreground">
                 No agent matches that filter. Clear the search or pick another category.
