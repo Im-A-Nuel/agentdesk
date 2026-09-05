@@ -4,7 +4,6 @@ import { ArrowRight, FileCheck2, KeyRound, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/site/reveal";
 import { Shell } from "@/components/site/layout";
-import { SectionLink } from "@/components/site/section-link";
 import { steps, triad } from "@/lib/content";
 
 export const metadata: Metadata = {
@@ -159,10 +158,10 @@ export default function HowItWorksPage() {
               </p>
               <div className="mt-2 flex flex-col items-center gap-3 sm:flex-row">
                 <Button variant="brass" size="xl" asChild>
-                  <SectionLink hash="marketplace">
+                  <Link href="/marketplace">
                     Browse the marketplace
                     <ArrowRight />
-                  </SectionLink>
+                  </Link>
                 </Button>
                 <Button variant="steel" size="xl" asChild>
                   <Link href="/dashboard">Open the dashboard</Link>

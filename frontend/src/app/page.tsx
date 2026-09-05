@@ -1,22 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  RefreshCw,
-  ArrowRight,
-  Check,
-  ChevronRight,
-  Search,
-} from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, Check, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { AgentCard } from "@/components/site/agent-card";
 import { Reveal } from "@/components/site/reveal";
 import { Shell } from "@/components/site/layout";
 import { CountUp } from "@/components/site/count-up";
-import { agents, categories, shortAddress, type Agent, type CategoryId } from "@/lib/agents";
-import { getAgents } from "@/lib/api";
+import { agents, categories, shortAddress } from "@/lib/agents";
 import { faqs, plans, steps, triad } from "@/lib/content";
 
 const registryStats = [
@@ -37,44 +28,8 @@ const trustedBy = [
   "THENA",
 ];
 
-export default function Marketplace() {
-  const [active, setActive] = useState<CategoryId | "all">("all");
-  const [query, setQuery] = useState("");
+export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-
-  const [list, setList] = useState<Agent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { agents: data } = await getAgents();
-      setList(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not load agents");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return list.filter((a) => {
-      const matchCategory = active === "all" || a.category === active;
-      const matchQuery =
-        !q ||
-        a.name.toLowerCase().includes(q) ||
-        a.operator.toLowerCase().includes(q) ||
-        a.tagline.toLowerCase().includes(q);
-      return matchCategory && matchQuery;
-    });
-  }, [active, query, list]);
 
   return (
     <Shell>
@@ -114,10 +69,10 @@ export default function Marketplace() {
           <Reveal delay={220}>
             <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button variant="brass" size="xl" asChild>
-                <a href="#marketplace">
+                <Link href="/marketplace">
                   Get started, it is free
                   <ArrowRight />
-                </a>
+                </Link>
               </Button>
               <p className="text-sm leading-tight text-muted-foreground">
                 Free to browse.
@@ -279,93 +234,6 @@ export default function Marketplace() {
         </div>
       </section>
 
-      {/* Marketplace */}
-      <section id="marketplace" className="scroll-mt-20 border-b border-border bg-panel">
-        <div className="mx-auto max-w-[1240px] px-5 py-20">
-          <Reveal>
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <p className="text-[12px] font-bold tracking-[0.18em] text-brass uppercase">
-                  Discovery layer
-                </p>
-                <h2 className="mt-4 text-3xl font-extrabold sm:text-[2.9rem]">
-                  Registered agents, four categories
-                </h2>
-                <p className="mt-4 max-w-xl text-muted-foreground">
-                  Identity, reputation, and activity come straight from the registry. Terms are
-                  shown before you sign anything.
-                </p>
-              </div>
-              <div className="relative w-full lg:w-72">
-                <Search className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search agent or operator"
-                  className="h-12 rounded-full border-border bg-card pl-10 shadow-panel transition-colors duration-300 focus-visible:border-brass"
-                />
-              </div>
-            </div>
-          </Reveal>
-
-          <Reveal delay={80}>
-            <div className="mt-8 flex flex-wrap gap-2">
-              <FilterChip active={active === "all"} onClick={() => setActive("all")}>
-                All agents
-              </FilterChip>
-              {categories.map((c) => (
-                <FilterChip key={c.id} active={active === c.id} onClick={() => setActive(c.id)}>
-                  {c.label}
-                </FilterChip>
-              ))}
-            </div>
-          </Reveal>
-
-          {active !== "all" && (
-            <p className="mt-5 max-w-xl text-sm text-muted-foreground">
-              {categories.find((c) => c.id === active)?.blurb}
-            </p>
-          )}
-
-          {loading && (
-            <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="panel h-64 animate-pulse" />
-              ))}
-            </div>
-          )}
-
-          {!loading && error && (
-            <div className="panel mt-8 p-10 text-center">
-              <p className="text-sm font-semibold text-foreground">Agents could not be loaded</p>
-              <p className="mt-2 text-sm text-muted-foreground">{error}</p>
-              <Button variant="steel" size="sm" className="mt-5" onClick={load}>
-                <RefreshCw />
-                Try again
-              </Button>
-            </div>
-          )}
-
-          {!loading && !error && (
-            <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((a, i) => (
-                <Reveal key={a.id} delay={i * 60}>
-                  <AgentCard agent={a} />
-                </Reveal>
-              ))}
-            </div>
-          )}
-
-          {!loading && !error && filtered.length === 0 && (
-            <div className="panel mt-8 p-10 text-center">
-              <p className="text-sm text-muted-foreground">
-                No agent matches that filter. Clear the search or pick another category.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
-
       {/* How it works */}
       <section id="how-it-works" className="scroll-mt-20 border-b border-border">
         <div className="mx-auto max-w-[1240px] px-5 py-20">
@@ -444,7 +312,7 @@ export default function Marketplace() {
                     className="mt-7 w-full"
                     asChild
                   >
-                    <a href="#marketplace">{p.cta}</a>
+                    <Link href="/marketplace">{p.cta}</Link>
                   </Button>
                 </div>
               </Reveal>
@@ -506,10 +374,10 @@ export default function Marketplace() {
             </p>
             <div className="relative mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button variant="brass" size="xl" asChild>
-                <a href="#marketplace">
+                <Link href="/marketplace">
                   Start with an agent
                   <ArrowRight />
-                </a>
+                </Link>
               </Button>
               <Button variant="steel" size="xl" asChild>
                 <Link href="/dashboard">Open the dashboard</Link>
@@ -519,28 +387,5 @@ export default function Marketplace() {
         </Reveal>
       </section>
     </Shell>
-  );
-}
-
-function FilterChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`cursor-pointer rounded-full border px-4 py-2.5 text-sm font-semibold transition-all duration-300 ease-instrument focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-        active
-          ? "border-transparent bg-primary text-primary-foreground shadow-brass"
-          : "border-border bg-card text-foreground/70 hover:border-border-strong hover:text-foreground"
-      }`}
-    >
-      {children}
-    </button>
   );
 }

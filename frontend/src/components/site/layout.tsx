@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { ArrowRight, ChevronRight, Menu, Terminal, Wallet, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SectionLink } from "@/components/site/section-link";
 import { cn } from "@/lib/utils";
 
 export function Wordmark() {
@@ -25,8 +24,8 @@ const navLinkClass =
 
 export function AnnouncementBar() {
   return (
-    <SectionLink
-      hash="marketplace"
+    <Link
+      href="/marketplace"
       className="group flex items-center justify-center gap-2 border-b border-border bg-panel px-5 py-2.5 text-center text-[13px] font-semibold"
     >
       <span className="text-brass">NEW</span>
@@ -34,12 +33,12 @@ export function AnnouncementBar() {
         Scoped session keys are live. Hire an agent with a cap you set.
       </span>
       <ChevronRight className="h-3.5 w-3.5 transition-transform duration-300 ease-instrument group-hover:translate-x-1" />
-    </SectionLink>
+    </Link>
   );
 }
 
 const nav = [
-  { label: "Marketplace", href: "/" },
+  { label: "Marketplace", href: "/marketplace" },
   { label: "Dashboard", href: "/dashboard" },
   { label: "How it works", href: "/how-it-works" },
   { label: "Pricing", href: "/pricing" },
@@ -171,10 +170,10 @@ export function SiteFooter() {
             Free to browse. No wallet approval until you set a cap and an expiry.
           </p>
           <Button variant="brass" size="xl" asChild>
-            <SectionLink hash="marketplace">
+            <Link href="/marketplace">
               Get started, it is free
               <ArrowRight />
-            </SectionLink>
+            </Link>
           </Button>
         </div>
       </div>
@@ -189,7 +188,7 @@ export function SiteFooter() {
         <FooterColumn
           title="Product"
           items={[
-            { label: "Marketplace", href: "/" },
+            { label: "Marketplace", href: "/marketplace" },
             { label: "Agent detail", href: "/agent/helios-band" },
             { label: "Permissions dashboard", href: "/dashboard" },
             { label: "Session keys", href: "/how-it-works" },
