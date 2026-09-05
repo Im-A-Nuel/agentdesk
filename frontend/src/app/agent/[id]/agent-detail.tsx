@@ -17,12 +17,13 @@ import {
   Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Reveal } from "@/components/site/reveal";
 import { Shell } from "@/components/site/layout";
 import { CopyButton } from "@/components/site/copy-button";
 import { TokenIcon } from "@/components/site/token-icon";
-import { agents, categoryBadgeClass, categoryLabel, shortAddress, usd, type Agent } from "@/lib/agents";
+import { agents, categoryBadgeVariant, categoryLabel, shortAddress, usd, type Agent } from "@/lib/agents";
 import { createHire, type HireResult } from "@/lib/api";
 
 const EXPLORER = "https://testnet.bscscan.com";
@@ -88,13 +89,9 @@ export function AgentDetail({ agent }: { agent: Agent }) {
           <Reveal className="mt-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <span
-                  className={`num rounded-full border px-2.5 py-1 text-[10px] tracking-[0.14em] uppercase ${categoryBadgeClass(
-                    agent.category,
-                  )}`}
-                >
+                <Badge variant={categoryBadgeVariant(agent.category)}>
                   {categoryLabel(agent.category)}
-                </span>
+                </Badge>
                 <h1 className="mt-4 text-4xl font-semibold sm:text-5xl">{agent.name}</h1>
                 <p className="mt-3 max-w-2xl text-lg text-muted-foreground">{agent.tagline}</p>
                 <p className="num mt-4 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">

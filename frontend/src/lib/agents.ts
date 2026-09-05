@@ -52,17 +52,18 @@ export const categories: { id: CategoryId; label: string; blurb: string }[] = [
 export const categoryLabel = (id: CategoryId) =>
   categories.find((c) => c.id === id)?.label ?? id;
 
-// Literal Tailwind classes per category (dynamic class names are not generated).
-export function categoryBadgeClass(id: CategoryId): string {
+export type CategoryBadgeVariant = "sky" | "default" | "success" | "warn";
+
+export function categoryBadgeVariant(id: CategoryId): CategoryBadgeVariant {
   switch (id) {
     case "rebalancing":
-      return "border-sky/25 bg-sky/12 text-sky";
+      return "sky";
     case "grid_trading":
-      return "border-brass/25 bg-brass/12 text-brass";
+      return "default";
     case "yield":
-      return "border-live/25 bg-live/12 text-live";
+      return "success";
     case "health_factor":
-      return "border-warn/25 bg-warn/12 text-warn";
+      return "warn";
   }
 }
 

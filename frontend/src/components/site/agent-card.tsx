@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, ShieldCheck } from "lucide-react";
-import { categoryBadgeClass, categoryLabel, shortAddress, usd, type Agent } from "@/lib/agents";
+import { Badge } from "@/components/ui/badge";
+import { categoryBadgeVariant, categoryLabel, shortAddress, usd, type Agent } from "@/lib/agents";
 
 export function AgentCard({ agent }: { agent: Agent }) {
   return (
@@ -18,13 +19,9 @@ export function AgentCard({ agent }: { agent: Agent }) {
             {shortAddress(agent.address)} · {agent.operator}
           </p>
         </div>
-        <span
-          className={`num rounded-full border px-2.5 py-1 text-[10px] tracking-[0.12em] uppercase ${categoryBadgeClass(
-            agent.category,
-          )}`}
-        >
+        <Badge variant={categoryBadgeVariant(agent.category)}>
           {categoryLabel(agent.category)}
-        </span>
+        </Badge>
       </div>
 
       <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{agent.tagline}</p>

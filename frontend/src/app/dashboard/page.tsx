@@ -7,11 +7,12 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { toast } from "sonner";
 import { ArrowUpRight, KeyRound, Loader2, RefreshCw, ShieldOff, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Reveal } from "@/components/site/reveal";
 import { Shell } from "@/components/site/layout";
 import { CopyButton } from "@/components/site/copy-button";
 import { CountUp } from "@/components/site/count-up";
-import { getAgent, shortAddress } from "@/lib/agents";
+import { categoryBadgeVariant, categoryLabel, getAgent, shortAddress } from "@/lib/agents";
 import { getMyHires, revokeHire, type HireWithLive } from "@/lib/api";
 
 const EXPLORER = "https://testnet.bscscan.com";
@@ -178,25 +179,44 @@ export default function Dashboard() {
           </div>
         )}
 
-        {rows?.map((h, i) => {
+{rows?.map((h, i) => {
           const agent = getAgent(h.agentId);
           const pct = Math.min(100, Math.round((h.spent / h.spendCap) * 100));
+          const remaining = Math.max(0, h.spendCap - h.spent);
           const isActive = h.status === "active";
           const isRevoking = revokingId === h.id;
+          const statusVariant: "success" | "destructive" | "outline" = isActive
+            ? "success"
+            : h.status === "revoked"
+              ? "destructive"
+              : "outline";
           return (
             <Reveal key={h.id} delay={i * 80}>
-              <article className="panel overflow-hidden">
+              <article
+                className={`panel overflow-hidden transition-shadow duration-300 ${
+                  isActive ? "shadow-panel" : ""
+                }`}
+              >
                 <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-4">
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <span
-                      className={`h-1.5 w-1.5 rounded-full ${
+                      className={`h-2 w-2 rounded-full ${
                         isActive ? "pulse-live bg-live" : "bg-destructive"
                       }`}
                     />
                     <h2 className="font-display text-lg font-semibold">{agent?.name}</h2>
-                    <span className="num rounded border border-border px-2 py-0.5 text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
+                    {agent && (
+                      <Badge
+                        variant={categoryBadgeVariant(agent.category)}
+                        className="hidden sm:inline-flex"
+                      >
+                        {categoryLabel(agent.category)}
+                      </Badge>
+                    )}
+                    <Badge variant={statusVariant}>
+                      {isActive && <span className="h-1.5 w-1.5 rounded-full bg-live" />}
                       {h.status}
-                    </span>
+                    </Badge>
                   </div>
                   <div className="flex items-center gap-2">
                     {agent && (
@@ -229,8 +249,12 @@ export default function Dashboard() {
                       <span className="text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
                         Spend against cap
                       </span>
-                      <span className="num text-sm">
-                        ${h.spent.toLocaleString("en-US")} / ${h.spendCap.toLocaleString("en-US")}
+                      <span className="num text-sm text-foreground">
+                        ${h.spent.toLocaleString("en-US")}
+                        <span className="text-muted-foreground">
+                          {" "}
+                          / ${h.spendCap.toLocaleString("en-US")}
+                        </span>
                       </span>
                     </div>
                     <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-panel">
@@ -241,9 +265,19 @@ export default function Dashboard() {
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <div className="num mt-3 flex justify-between text-[10px] text-muted-foreground">
-                      <span>{pct}% used</span>
-                      <span>{isActive ? `expires in ${h.expiresIn}` : "permission ended"}</span>
+                    <div className="num mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[10px] text-muted-foreground">
+                      <span>
+                        {pct}% used
+                        {isActive && (
+                          <span className="text-live">
+                            {" "}
+                            · ${remaining.toLocaleString("en-US")} remaining
+                          </span>
+                        )}
+                      </span>
+                      <span>
+                        {isActive ? `expires in ${h.expiresIn}` : "permission ended"}
+                      </span>
                     </div>
 
                     <dl className="mt-6 grid gap-3 text-xs sm:grid-cols-2">
