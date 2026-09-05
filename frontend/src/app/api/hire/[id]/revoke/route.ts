@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     return error(400, "INVALID_ID", "Invalid session id");
   }
 
-  const hire = getHire(id);
+  const hire = await getHire(id);
   if (!hire) return error(404, "NOT_FOUND", "Hire not found");
   if (hire.status === "revoked") {
     return error(400, "ALREADY_REVOKED", "Session is already revoked");
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
 
   try {
     const { txHash: revokeTxHash } = revokeSession(hire.sessionKeyAddress);
-    updateHire(id, { status: "revoked" });
+    await updateHire(id, { status: "revoked" });
     return NextResponse.json({ revokeTxHash });
   } catch {
     return error(500, "INTERNAL", "Could not revoke the session. Please try again.");

@@ -27,8 +27,10 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://agentdesk.vercel.app"),
+  metadataBase: new URL(siteUrl && siteUrl.trim() ? siteUrl : "https://agentdesk-bnb.vercel.app"),
   title: {
     default: "AgentDesk, Hire Onchain AI Agents on BNB Chain",
     template: "%s | AgentDesk",

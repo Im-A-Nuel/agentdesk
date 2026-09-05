@@ -1,23 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { agents } from "@/lib/agents";
+import { listAgents } from "@/lib/agents-repo";
 
-export function GET(req: NextRequest) {
-  const category = req.nextUrl.searchParams.get("category");
-  const search = req.nextUrl.searchParams.get("search")?.trim().toLowerCase();
-
-  let list = agents;
-  if (category && category !== "all") {
-    list = list.filter((a) => a.category === category);
-  }
-  if (search) {
-    list = list.filter(
-      (a) =>
-        a.name.toLowerCase().includes(search) ||
-        a.operator.toLowerCase().includes(search) ||
-        a.tagline.toLowerCase().includes(search),
+export async function GET(req: NextRequest) {
+  try {
+    const agents = await listAgents({
+      category: req.nextUrl.searchParams.get("category") ?? undefined,
+      search: req.nextUrl.searchParams.get("search") ?? undefined,
+    });
+    return NextResponse.json({ agents });
+  } catch {
+    return NextResponse.json(
+      { error: { code: "INTERNAL", message: "Could not load agents. Please try again." } },
+      { status: 500 },
     );
   }
-
-  return NextResponse.json({ agents: list });
 }

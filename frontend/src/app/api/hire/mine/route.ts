@@ -10,11 +10,12 @@ function humanDuration(ms: number): string {
   return days > 0 ? `${days}d ${hours}h` : `${hours}h`;
 }
 
-export function GET(req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     const wallet = req.nextUrl.searchParams.get("wallet");
 
-    const hires = listHires(wallet).map((h) => {
+    const records = await listHires(wallet);
+    const hires = records.map((h) => {
       const live = readSessionState(h);
       const now = Date.now();
       const expired = new Date(live.expiresAt).getTime() <= now;

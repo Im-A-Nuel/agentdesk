@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getAgent } from "@/lib/agents";
+import { getAgent } from "@/lib/agents-repo";
 import { createSession, registerToKeystore } from "@/lib/altana";
 import { hireErc8183Agent } from "@/lib/erc8183";
 import { createHire as saveHire } from "@/lib/hire-store";
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   const durationSeconds = Number(body?.durationSeconds);
   const userWallet = body?.userWallet;
 
-  const agent = agentId ? getAgent(agentId) : undefined;
+  const agent = agentId ? await getAgent(agentId) : undefined;
   if (!agent) return error(400, "INVALID_AGENT", "Unknown agent id");
   if (!userWallet || !/^0x[a-fA-F0-9]{40}$/.test(userWallet)) {
     return error(400, "INVALID_WALLET", "A valid wallet address is required");
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       spendCap,
     });
 
-    const hire = saveHire({
+    const hire = await saveHire({
       userWallet,
       agentId: agent.id,
       sessionKeyAddress,
