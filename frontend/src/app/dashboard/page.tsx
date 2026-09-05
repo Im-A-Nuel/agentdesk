@@ -8,6 +8,16 @@ import { toast } from "sonner";
 import { ArrowUpRight, KeyRound, Loader2, RefreshCw, ShieldOff, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Reveal } from "@/components/site/reveal";
 import { Shell } from "@/components/site/layout";
 import { CopyButton } from "@/components/site/copy-button";
@@ -26,6 +36,7 @@ export default function Dashboard() {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [pendingRevoke, setPendingRevoke] = useState<HireWithLive | null>(null);
 
   const load = useCallback(
     async (wallet: string) => {
@@ -231,7 +242,7 @@ export default function Dashboard() {
                       variant="destructive"
                       size="sm"
                       disabled={!isActive || isRevoking}
-                      onClick={() => revoke(h.id)}
+                      onClick={() => setPendingRevoke(h)}
                     >
                       {isRevoking ? (
                         <Loader2 className="animate-spin" />
@@ -303,6 +314,42 @@ export default function Dashboard() {
           );
         })}
       </div>
+
+      <AlertDialog
+        open={pendingRevoke !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingRevoke(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke this session onchain?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The session key for{" "}
+              <span className="font-semibold text-foreground">
+                {pendingRevoke ? getAgent(pendingRevoke.agentId)?.name : ""}
+              </span>{" "}
+              will be invalidated in the Altana Keystore. The revoke transaction is final and
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingRevoke(null)}>
+              Keep session
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const target = pendingRevoke;
+                setPendingRevoke(null);
+                if (target) revoke(target.id);
+              }}
+            >
+              <ShieldOff />
+              Revoke onchain
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Shell>
   );
 }

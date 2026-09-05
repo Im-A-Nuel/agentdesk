@@ -5,24 +5,43 @@ import { getHire, updateHire } from "@/lib/hire-store";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export async function POST(_req: NextRequest, { params }: Ctx) {
-  const { id } = await params;
+function error(status: number, code: string, message: string) {
+  return NextResponse.json({ error: { code, message } }, { status });
+}
+
+export async function POST(req: NextRequest, { params }: Ctx) {
+  let body: { userWallet?: string } | null = null;
+  try {
+    body = await req.json();
+  } catch {
+    return error(400, "BAD_JSON", "Request body must be valid JSON");
+  }
+
+  let id: string;
+  try {
+    ({ id } = await params);
+  } catch {
+    return error(400, "INVALID_ID", "Invalid session id");
+  }
+
   const hire = getHire(id);
-  if (!hire) {
-    return NextResponse.json(
-      { error: { code: "NOT_FOUND", message: "Hire not found" } },
-      { status: 404 },
-    );
-  }
+  if (!hire) return error(404, "NOT_FOUND", "Hire not found");
   if (hire.status === "revoked") {
-    return NextResponse.json(
-      { error: { code: "ALREADY_REVOKED", message: "Session is already revoked" } },
-      { status: 400 },
-    );
+    return error(400, "ALREADY_REVOKED", "Session is already revoked");
   }
 
-  const { txHash: revokeTxHash } = revokeSession(hire.sessionKeyAddress);
-  updateHire(id, { status: "revoked" });
+  const userWallet = body?.userWallet;
+  // Enforce ownership for real sessions. Demo seed rows (userWallet null) stay revocable
+  // so the dashboard demo keeps working; real sessions belong to a specific wallet.
+  if (hire.userWallet && (!userWallet || hire.userWallet.toLowerCase() !== userWallet.toLowerCase())) {
+    return error(403, "NOT_OWNER", "You do not own this session");
+  }
 
-  return NextResponse.json({ revokeTxHash });
+  try {
+    const { txHash: revokeTxHash } = revokeSession(hire.sessionKeyAddress);
+    updateHire(id, { status: "revoked" });
+    return NextResponse.json({ revokeTxHash });
+  } catch {
+    return error(500, "INTERNAL", "Could not revoke the session. Please try again.");
+  }
 }
