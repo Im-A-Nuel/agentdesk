@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { ArrowRight, ChevronRight, Menu, Terminal, Wallet, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SectionLink } from "@/components/site/section-link";
 import { cn } from "@/lib/utils";
 
 export function Wordmark() {
@@ -24,8 +25,8 @@ const navLinkClass =
 
 export function AnnouncementBar() {
   return (
-    <Link
-      href={{ pathname: "/", hash: "marketplace" }}
+    <SectionLink
+      hash="marketplace"
       className="group flex items-center justify-center gap-2 border-b border-border bg-panel px-5 py-2.5 text-center text-[13px] font-semibold"
     >
       <span className="text-brass">NEW</span>
@@ -33,9 +34,16 @@ export function AnnouncementBar() {
         Scoped session keys are live. Hire an agent with a cap you set.
       </span>
       <ChevronRight className="h-3.5 w-3.5 transition-transform duration-300 ease-instrument group-hover:translate-x-1" />
-    </Link>
+    </SectionLink>
   );
 }
+
+const nav = [
+  { label: "Marketplace", href: "/" },
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "How it works", href: "/how-it-works" },
+  { label: "Pricing", href: "/pricing" },
+];
 
 function ConnectWalletButton() {
   return (
@@ -87,24 +95,15 @@ export function SiteHeader() {
         <div className="flex items-center gap-9">
           <Wordmark />
           <nav className="hidden items-center gap-1 text-[14px] font-semibold md:flex">
-            <Link
-              href="/"
-              className={cn(navLinkClass, pathname === "/" && "text-foreground")}
-            >
-              Marketplace
-            </Link>
-            <Link
-              href="/dashboard"
-              className={cn(navLinkClass, pathname === "/dashboard" && "text-foreground")}
-            >
-              Dashboard
-            </Link>
-            <Link href={{ pathname: "/", hash: "how-it-works" }} className={navLinkClass}>
-              How it works
-            </Link>
-            <Link href={{ pathname: "/", hash: "pricing" }} className={navLinkClass}>
-              Pricing
-            </Link>
+            {nav.map((n) => (
+              <Link
+                key={n.href}
+                href={n.href}
+                className={cn(navLinkClass, pathname === n.href && "text-foreground")}
+              >
+                {n.label}
+              </Link>
+            ))}
           </nav>
         </div>
         <div className="flex items-center gap-2.5">
@@ -128,18 +127,11 @@ export function SiteHeader() {
       {menuOpen && (
         <div className="border-t border-border bg-background px-5 py-4 md:hidden">
           <nav className="flex flex-col gap-1 text-[15px] font-semibold">
-            <MobileLink href="/" onNavigate={closeMenu}>
-              Marketplace
-            </MobileLink>
-            <MobileLink href="/dashboard" onNavigate={closeMenu}>
-              Dashboard
-            </MobileLink>
-            <MobileLink href={{ pathname: "/", hash: "how-it-works" }} onNavigate={closeMenu}>
-              How it works
-            </MobileLink>
-            <MobileLink href={{ pathname: "/", hash: "pricing" }} onNavigate={closeMenu}>
-              Pricing
-            </MobileLink>
+            {nav.map((n) => (
+              <MobileLink key={n.href} href={n.href} onNavigate={closeMenu}>
+                {n.label}
+              </MobileLink>
+            ))}
           </nav>
         </div>
       )}
@@ -152,7 +144,7 @@ function MobileLink({
   onNavigate,
   children,
 }: {
-  href: string | { pathname: string; hash?: string };
+  href: string;
   onNavigate: () => void;
   children: ReactNode;
 }) {
@@ -179,10 +171,10 @@ export function SiteFooter() {
             Free to browse. No wallet approval until you set a cap and an expiry.
           </p>
           <Button variant="brass" size="xl" asChild>
-            <Link href={{ pathname: "/", hash: "marketplace" }}>
+            <SectionLink hash="marketplace">
               Get started, it is free
               <ArrowRight />
-            </Link>
+            </SectionLink>
           </Button>
         </div>
       </div>
@@ -196,13 +188,30 @@ export function SiteFooter() {
         </div>
         <FooterColumn
           title="Product"
-          items={["Marketplace", "Agent detail", "Permissions dashboard", "Session keys"]}
+          items={[
+            { label: "Marketplace", href: "/" },
+            { label: "Agent detail", href: "/agent/helios-band" },
+            { label: "Permissions dashboard", href: "/dashboard" },
+            { label: "Session keys", href: "/how-it-works" },
+          ]}
         />
         <FooterColumn
           title="Protocol"
-          items={["ERC-8004 registry", "ERC-8183 hiring", "Altana Keystore", "BSC testnet"]}
+          items={[
+            { label: "ERC-8004 registry" },
+            { label: "ERC-8183 hiring" },
+            { label: "Altana Keystore" },
+            { label: "BSC testnet" },
+          ]}
         />
-        <FooterColumn title="Resources" items={["Docs", "Architecture", "Security", "Status"]} />
+        <FooterColumn
+          title="Resources"
+          items={[
+            { label: "How it works", href: "/how-it-works" },
+            { label: "Pricing", href: "/pricing" },
+            { label: "Dashboard", href: "/dashboard" },
+          ]}
+        />
       </div>
       <div className="mx-auto flex max-w-[1240px] flex-col gap-2 border-t border-border px-5 py-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <span className="num">AgentDesk, built for BNB Chain Build the Era</span>
@@ -212,7 +221,13 @@ export function SiteFooter() {
   );
 }
 
-function FooterColumn({ title, items }: { title: string; items: string[] }) {
+function FooterColumn({
+  title,
+  items,
+}: {
+  title: string;
+  items: { label: string; href?: string }[];
+}) {
   return (
     <div>
       <h3 className="text-[12px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
@@ -220,10 +235,19 @@ function FooterColumn({ title, items }: { title: string; items: string[] }) {
       </h3>
       <ul className="mt-4 space-y-2.5 text-sm">
         {items.map((i) => (
-          <li key={i}>
-            <span className="cursor-default text-foreground/75 transition-colors duration-300 hover:text-brass">
-              {i}
-            </span>
+          <li key={i.label}>
+            {i.href ? (
+              <Link
+                href={i.href}
+                className="cursor-pointer text-foreground/75 transition-colors duration-300 hover:text-brass"
+              >
+                {i.label}
+              </Link>
+            ) : (
+              <span className="cursor-default text-foreground/75 transition-colors duration-300 hover:text-brass">
+                {i.label}
+              </span>
+            )}
           </li>
         ))}
       </ul>
