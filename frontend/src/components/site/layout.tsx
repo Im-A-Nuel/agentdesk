@@ -4,15 +4,16 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowRight, ChevronRight, Menu, Terminal, Wallet, X } from "lucide-react";
+import { ArrowRight, ChevronRight, Menu, Wallet, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandMark } from "@/components/site/brand-mark";
 import { cn } from "@/lib/utils";
 
 export function Wordmark() {
   return (
     <Link href="/" className="group flex items-center gap-2.5">
-      <span className="relative grid h-8 w-8 place-items-center rounded-xl bg-brass-gradient text-primary-foreground transition-transform duration-500 ease-instrument group-hover:rotate-6">
-        <Terminal className="h-4 w-4" strokeWidth={2.6} />
+      <span className="relative grid h-8 w-8 place-items-center overflow-hidden rounded-xl transition-transform duration-500 ease-instrument group-hover:rotate-6">
+        <BrandMark className="h-full w-full" />
       </span>
       <span className="font-display text-[19px] font-extrabold tracking-tight">AgentDesk</span>
     </Link>
