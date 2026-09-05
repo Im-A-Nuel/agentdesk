@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/site/reveal";
 import { Shell } from "@/components/site/layout";
 import { CountUp } from "@/components/site/count-up";
-import { agents, categories, shortAddress } from "@/lib/agents";
+import { agents, categories, categoryDotClass, shortAddress } from "@/lib/agents";
 import { faqs, plans, steps, triad } from "@/lib/content";
 
 const registryStats = [
@@ -116,7 +116,7 @@ export default function LandingPage() {
                           i === 0 ? "bg-accent text-brass" : "text-foreground/70"
                         }`}
                       >
-                        <span className="h-1.5 w-1.5 rounded-full bg-brass-gradient" />
+                        <span className={`h-1.5 w-1.5 rounded-full ${categoryDotClass(c.id)}`} />
                         {c.label}
                       </li>
                     ))}

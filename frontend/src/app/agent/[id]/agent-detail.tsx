@@ -21,7 +21,7 @@ import { Slider } from "@/components/ui/slider";
 import { Reveal } from "@/components/site/reveal";
 import { Shell } from "@/components/site/layout";
 import { CopyButton } from "@/components/site/copy-button";
-import { agents, categoryLabel, shortAddress, usd, type Agent } from "@/lib/agents";
+import { agents, categoryBadgeClass, categoryLabel, shortAddress, usd, type Agent } from "@/lib/agents";
 import { createHire, type HireResult } from "@/lib/api";
 
 const EXPLORER = "https://testnet.bscscan.com";
@@ -87,7 +87,11 @@ export function AgentDetail({ agent }: { agent: Agent }) {
           <Reveal className="mt-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <span className="num rounded border border-border px-2 py-1 text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
+                <span
+                  className={`num rounded-full border px-2.5 py-1 text-[10px] tracking-[0.14em] uppercase ${categoryBadgeClass(
+                    agent.category,
+                  )}`}
+                >
                   {categoryLabel(agent.category)}
                 </span>
                 <h1 className="mt-4 text-4xl font-semibold sm:text-5xl">{agent.name}</h1>

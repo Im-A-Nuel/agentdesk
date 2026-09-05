@@ -46,6 +46,33 @@ export const categories: { id: CategoryId; label: string; blurb: string }[] = [
 export const categoryLabel = (id: CategoryId) =>
   categories.find((c) => c.id === id)?.label ?? id;
 
+// Literal Tailwind classes per category (dynamic class names are not generated).
+export function categoryBadgeClass(id: CategoryId): string {
+  switch (id) {
+    case "rebalancing":
+      return "border-sky/25 bg-sky/12 text-sky";
+    case "grid_trading":
+      return "border-brass/25 bg-brass/12 text-brass";
+    case "yield":
+      return "border-live/25 bg-live/12 text-live";
+    case "health_factor":
+      return "border-warn/25 bg-warn/12 text-warn";
+  }
+}
+
+export function categoryDotClass(id: CategoryId): string {
+  switch (id) {
+    case "rebalancing":
+      return "bg-sky";
+    case "grid_trading":
+      return "bg-brass";
+    case "yield":
+      return "bg-live";
+    case "health_factor":
+      return "bg-warn";
+  }
+}
+
 const pancake = { label: "PancakeSwap Router v3", address: "0x1b81D678ffb9C0263b24A97847620C99d213eB14" };
 const venus = { label: "Venus Comptroller", address: "0xfD36E2c2a6789Db23113685031d7F16329158384" };
 const wbnb = { label: "WBNB", address: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c" };

@@ -2,12 +2,14 @@
 const nextConfig = {
   webpack: (config) => {
     // @coinbase/cdp-sdk references optional @x402/* modules that are not installed.
-    // They are only reachable through the Coinbase smart-account connector, which is never
-    // used in AgentDesk (users connect via injected wallets on BSC testnet), so drop them.
-    // A bare "@x402" alias also matches every "@x402/<subpath>" request.
+    // @metamask/sdk and @walletconnect/logger lazily require optional modules that only
+    // matter on React Native or when a pretty log transport is configured, neither of which
+    // applies to AgentDesk. A bare "@x402" alias also matches every "@x402/<subpath>" request.
     config.resolve.alias = {
       ...config.resolve.alias,
       "@x402": false,
+      "@react-native-async-storage/async-storage": false,
+      "pino-pretty": false,
     };
     return config;
   },
