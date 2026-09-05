@@ -68,7 +68,7 @@ export default function PricingPage() {
                     {p.items.map((it) => (
                       <li key={it} className="flex items-start gap-2.5">
                         <Check className="mt-0.5 h-4 w-4 shrink-0 text-live" />
-                        <span className="text-foreground/80">{it}</span>
+                        <span className="text-foreground/85">{it}</span>
                       </li>
                     ))}
                   </ul>
@@ -78,7 +78,7 @@ export default function PricingPage() {
                     className="mt-7 w-full"
                     asChild
                   >
-                    <Link href="/marketplace">{p.cta}</Link>
+                    <Link href={p.href}>{p.cta}</Link>
                   </Button>
                 </div>
               </Reveal>

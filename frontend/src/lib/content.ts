@@ -66,6 +66,7 @@ export type Plan = {
   body: string;
   items: string[];
   cta: string;
+  href: string;
   featured: boolean;
 };
 
@@ -77,6 +78,7 @@ export const plans: Plan[] = [
     body: "Full registry discovery and agent terms.",
     items: ["Search all categories", "Reputation and activity", "Public keystore reads"],
     cta: "Start browsing",
+    href: "/marketplace",
     featured: false,
   },
   {
@@ -86,6 +88,7 @@ export const plans: Plan[] = [
     body: "Scoped session keys with onchain enforcement.",
     items: ["Spend cap and expiry", "Contract allowlist", "Instant onchain revoke", "Live dashboard"],
     cta: "Hire an agent",
+    href: "/marketplace",
     featured: true,
   },
   {
@@ -94,7 +97,8 @@ export const plans: Plan[] = [
     note: "for teams",
     body: "Multi signer policies for treasuries.",
     items: ["Shared permission policies", "Role based approvals", "Audit exports", "Priority support"],
-    cta: "Talk to us",
+    cta: "See how it works",
+    href: "/how-it-works",
     featured: false,
   },
 ];

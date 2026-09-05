@@ -409,7 +409,7 @@ function TxRow({ label, hash }: { label: string; hash: string }) {
   return (
     <div>
       <p className="text-[11px] text-muted-foreground">{label}</p>
-      <p className="num mt-1 flex items-start gap-2 text-[10px] break-all text-foreground/80">
+      <p className="num mt-1 flex items-start gap-2 text-[10px] break-all text-foreground/85">
         <a
           href={`${EXPLORER}/tx/${hash}`}
           target="_blank"

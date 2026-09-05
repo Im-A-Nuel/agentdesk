@@ -113,7 +113,7 @@ export default function LandingPage() {
                       <li
                         key={c.id}
                         className={`flex items-center gap-2 rounded-lg px-2.5 py-2 font-semibold transition-colors duration-300 ${
-                          i === 0 ? "bg-accent text-brass" : "text-foreground/70"
+                          i === 0 ? "bg-accent text-brass" : "text-foreground/85"
                         }`}
                       >
                         <span className={`h-1.5 w-1.5 rounded-full ${categoryDotClass(c.id)}`} />
@@ -168,7 +168,7 @@ export default function LandingPage() {
                             />
                           </div>
                         </div>
-                        <span className="num hidden text-foreground/80 sm:block">{7 + i * 3}d</span>
+                        <span className="num hidden text-foreground/85 sm:block">{7 + i * 3}d</span>
                         <span
                           className={`hidden rounded-full px-2.5 py-1 text-[11px] font-bold sm:inline-flex ${
                             pending ? "bg-warn/15 text-warn" : "bg-live/12 text-live"
@@ -196,7 +196,7 @@ export default function LandingPage() {
                 {[...trustedBy, ...trustedBy].map((t, i) => (
                   <span
                     key={`${t}-${i}`}
-                    className="num text-[12px] font-semibold tracking-[0.16em] text-foreground/50"
+                    className="num text-[12px] font-semibold tracking-[0.16em] text-foreground/85"
                   >
                     {t}
                   </span>
@@ -302,7 +302,7 @@ export default function LandingPage() {
                     {p.items.map((it) => (
                       <li key={it} className="flex items-start gap-2.5">
                         <Check className="mt-0.5 h-4 w-4 shrink-0 text-live" />
-                        <span className="text-foreground/80">{it}</span>
+                        <span className="text-foreground/85">{it}</span>
                       </li>
                     ))}
                   </ul>
@@ -312,7 +312,7 @@ export default function LandingPage() {
                     className="mt-7 w-full"
                     asChild
                   >
-                    <Link href="/marketplace">{p.cta}</Link>
+                    <Link href={p.href}>{p.cta}</Link>
                   </Button>
                 </div>
               </Reveal>

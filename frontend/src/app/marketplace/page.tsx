@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { agents } from "@/lib/agents";
 import { Marketplace } from "./marketplace";
 
 export const metadata: Metadata = {
@@ -9,5 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function MarketplacePage() {
-  return <Marketplace />;
+  return <Marketplace initialAgents={agents} />;
 }

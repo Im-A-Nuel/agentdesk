@@ -21,7 +21,7 @@ export function Wordmark() {
 }
 
 const navLinkClass =
-  "rounded-full px-3.5 py-2 text-foreground/70 transition-colors duration-300 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
+  "rounded-full px-3.5 py-2 text-foreground/85 transition-colors duration-300 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 
 export function AnnouncementBar() {
   return (
@@ -30,7 +30,7 @@ export function AnnouncementBar() {
       className="group flex items-center justify-center gap-2 border-b border-border bg-panel px-5 py-2.5 text-center text-[13px] font-semibold"
     >
       <span className="text-brass">NEW</span>
-      <span className="text-foreground/80">
+      <span className="text-foreground/85">
         Scoped session keys are live. Hire an agent with a cap you set.
       </span>
       <ChevronRight className="h-3.5 w-3.5 transition-transform duration-300 ease-instrument group-hover:translate-x-1" />
@@ -116,7 +116,7 @@ export function SiteHeader() {
             type="button"
             aria-label="Toggle menu"
             aria-expanded={menuOpen}
-            className="grid h-10 w-10 cursor-pointer place-items-center rounded-full border border-border text-foreground/80 transition-colors duration-300 hover:bg-accent md:hidden"
+            className="grid h-10 w-10 cursor-pointer place-items-center rounded-full border border-border text-foreground/85 transition-colors duration-300 hover:bg-accent md:hidden"
             onClick={() => setMenuOpen((o) => !o)}
           >
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -152,7 +152,7 @@ function MobileLink({
     <Link
       href={href}
       onClick={onNavigate}
-      className="cursor-pointer rounded-lg px-3 py-2.5 text-foreground/75 transition-colors duration-300 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      className="cursor-pointer rounded-lg px-3 py-2.5 text-foreground/85 transition-colors duration-300 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
     >
       {children}
     </Link>
@@ -223,12 +223,12 @@ function FooterColumn({
             {i.href ? (
               <Link
                 href={i.href}
-                className="cursor-pointer text-foreground/75 transition-colors duration-300 hover:text-brass"
+                className="cursor-pointer text-foreground/85 transition-colors duration-300 hover:text-brass"
               >
                 {i.label}
               </Link>
             ) : (
-              <span className="cursor-default text-foreground/75 transition-colors duration-300 hover:text-brass">
+              <span className="cursor-default text-foreground/85 transition-colors duration-300 hover:text-brass">
                 {i.label}
               </span>
             )}

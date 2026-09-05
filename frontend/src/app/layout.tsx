@@ -28,6 +28,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://agentdesk.vercel.app"),
   title: {
     default: "AgentDesk, Hire Onchain AI Agents on BNB Chain",
     template: "%s | AgentDesk",
@@ -39,9 +40,18 @@ export const metadata: Metadata = {
     description:
       "A discovery to hire marketplace for AI agents, with scoped session keys registered in the Altana Keystore and instant onchain revoke.",
     type: "website",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "AgentDesk: hire onchain AI agents on BNB Smart Chain, scoped, capped and revocable",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
+    images: ["/og.png"],
   },
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }, "/favicon.ico"],
