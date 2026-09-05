@@ -148,8 +148,34 @@
     letter-spacing: -0.035em;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   ::selection {
     background: color-mix(in oklab, var(--brass) 22%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .hairline-hover {
+    transition: none;
+  }
+  .hairline-hover:hover {
+    transform: none;
+  }
+  .ticker-track,
+  .pulse-live,
+  .float-slow {
+    animation: none;
   }
 }
 

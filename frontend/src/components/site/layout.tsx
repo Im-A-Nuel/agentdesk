@@ -20,7 +20,7 @@ export function Wordmark() {
 }
 
 const navLinkClass =
-  "rounded-full px-3.5 py-2 text-foreground/70 transition-colors duration-300 hover:bg-accent hover:text-foreground";
+  "rounded-full px-3.5 py-2 text-foreground/70 transition-colors duration-300 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 
 export function AnnouncementBar() {
   return (
@@ -160,7 +160,7 @@ function MobileLink({
     <Link
       href={href}
       onClick={onNavigate}
-      className="cursor-pointer rounded-lg px-3 py-2.5 text-foreground/75 transition-colors duration-300 hover:bg-accent hover:text-foreground"
+      className="cursor-pointer rounded-lg px-3 py-2.5 text-foreground/75 transition-colors duration-300 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
     >
       {children}
     </Link>

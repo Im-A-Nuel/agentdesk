@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/site/reveal";
 import { Shell } from "@/components/site/layout";
 import { CopyButton } from "@/components/site/copy-button";
+import { CountUp } from "@/components/site/count-up";
 import { getAgent, shortAddress } from "@/lib/agents";
 import { getMyHires, revokeHire, type HireWithLive } from "@/lib/api";
 
@@ -119,11 +120,21 @@ export default function Dashboard() {
           {isConnected && (
             <Reveal delay={80}>
               <div className="panel mt-10 grid divide-y divide-border sm:grid-cols-3 sm:divide-y-0 sm:divide-x">
-                <Summary label="Active sessions" value={`${activeRows.length}`} accent />
-                <Summary label="Combined spend cap" value={`$${totalCap.toLocaleString("en-US")}`} />
+                <Summary
+                  label="Active sessions"
+                  value={activeRows.length}
+                  format={(n) => `${n}`}
+                  accent
+                />
+                <Summary
+                  label="Combined spend cap"
+                  value={totalCap}
+                  format={(n) => `$${n.toLocaleString("en-US")}`}
+                />
                 <Summary
                   label="Spent against caps"
-                  value={`$${totalSpent.toLocaleString("en-US")}`}
+                  value={totalSpent}
+                  format={(n) => `$${n.toLocaleString("en-US")}`}
                 />
               </div>
             </Reveal>
@@ -279,10 +290,24 @@ function NotConnected({ onConnect }: { onConnect: () => void }) {
   );
 }
 
-function Summary({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function Summary({
+  label,
+  value,
+  format,
+  accent,
+}: {
+  label: string;
+  value: number;
+  format: (n: number) => string;
+  accent?: boolean;
+}) {
   return (
     <div className="px-6 py-6">
-      <div className={`num text-3xl ${accent ? "text-brass" : ""}`}>{value}</div>
+      <CountUp
+        value={value}
+        format={format}
+        className={`num text-3xl ${accent ? "text-brass" : ""}`}
+      />
       <div className="mt-2 text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
         {label}
       </div>

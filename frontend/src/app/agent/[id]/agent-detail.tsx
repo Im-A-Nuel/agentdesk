@@ -24,6 +24,8 @@ import { CopyButton } from "@/components/site/copy-button";
 import { agents, categoryLabel, shortAddress, usd, type Agent } from "@/lib/agents";
 import { createHire, type HireResult } from "@/lib/api";
 
+const EXPLORER = "https://testnet.bscscan.com";
+
 const durations = [7, 14, 30, 90];
 
 export function AgentDetail({ agent }: { agent: Agent }) {
@@ -175,7 +177,14 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                   <li key={c.address} className="flex items-center justify-between gap-4 py-3.5">
                     <span className="text-sm">{c.label}</span>
                     <span className="num flex items-center gap-2 text-[11px] text-muted-foreground">
-                      {shortAddress(c.address)}
+                      <a
+                        href={`${EXPLORER}/address/${c.address}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="transition-colors duration-300 hover:text-brass"
+                      >
+                        {shortAddress(c.address)}
+                      </a>
                       <CopyButton value={c.address} label={`Copy ${c.label} address`} />
                     </span>
                   </li>
@@ -349,12 +358,26 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                       </p>
                       <p className="num flex items-start gap-2 text-[10px] break-all text-muted-foreground">
                         <span className="shrink-0">keystore</span>
-                        <span>{hireResult.keystoreTxHash}</span>
+                        <a
+                          href={`${EXPLORER}/tx/${hireResult.keystoreTxHash}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="transition-colors duration-300 hover:text-brass"
+                        >
+                          {hireResult.keystoreTxHash}
+                        </a>
                         <CopyButton value={hireResult.keystoreTxHash} label="Copy keystore tx" />
                       </p>
                       <p className="num flex items-start gap-2 text-[10px] break-all text-muted-foreground">
                         <span className="shrink-0">erc8183</span>
-                        <span>{hireResult.erc8183TxHash}</span>
+                        <a
+                          href={`${EXPLORER}/tx/${hireResult.erc8183TxHash}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="transition-colors duration-300 hover:text-brass"
+                        >
+                          {hireResult.erc8183TxHash}
+                        </a>
                         <CopyButton value={hireResult.erc8183TxHash} label="Copy ERC-8183 tx" />
                       </p>
                     </>

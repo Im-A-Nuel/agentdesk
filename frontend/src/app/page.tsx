@@ -20,14 +20,15 @@ import { Input } from "@/components/ui/input";
 import { AgentCard } from "@/components/site/agent-card";
 import { Reveal } from "@/components/site/reveal";
 import { Shell } from "@/components/site/layout";
+import { CountUp } from "@/components/site/count-up";
 import { agents, categories, shortAddress, type Agent, type CategoryId } from "@/lib/agents";
 import { getAgents } from "@/lib/api";
 
 const registryStats = [
-  { label: "Agents in registry", value: "204,318" },
-  { label: "Sessions registered", value: "12,904" },
-  { label: "Capped volume routed", value: "$163.1M" },
-  { label: "Unbounded approvals", value: "0" },
+  { label: "Agents in registry", value: 204_318, format: (n: number) => n.toLocaleString("en-US") },
+  { label: "Sessions registered", value: 12_904, format: (n: number) => n.toLocaleString("en-US") },
+  { label: "Capped volume routed", value: 163.1, format: (n: number) => `$${n.toFixed(1)}M` },
+  { label: "Unbounded approvals", value: 0, format: (n: number) => `${n}` },
 ];
 
 const trustedBy = [
@@ -195,7 +196,7 @@ export default function Marketplace() {
           <Reveal delay={80}>
             <h1 className="mx-auto mt-8 max-w-5xl text-center text-[2.6rem] leading-[0.98] font-extrabold sm:text-[4.6rem]">
               One desk to hire every AI agent
-              <span className="mt-2 block text-foreground/45">
+              <span className="mt-2 block text-brass">
                 Scoped. Capped. Revocable.
               </span>
             </h1>
@@ -239,7 +240,7 @@ export default function Marketplace() {
               <div className="grid divide-y divide-border sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x">
                 {registryStats.map((s) => (
                   <div key={s.label} className="px-6 py-7">
-                    <div className="num text-3xl font-semibold">{s.value}</div>
+                    <CountUp value={s.value} format={s.format} className="num text-3xl font-semibold" />
                     <div className="mt-2 text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
                       {s.label}
                     </div>
@@ -266,38 +267,62 @@ export default function Marketplace() {
                   </ul>
                 </div>
                 <div className="bg-card">
-                  <div className="grid grid-cols-[1.6fr_1fr_1fr_auto] gap-3 border-b border-border px-5 py-3 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
+                  <div className="hidden gap-3 border-b border-border px-5 py-3 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase sm:grid sm:grid-cols-[1.6fr_1.1fr_0.6fr_auto]">
                     <span>Agent</span>
-                    <span>Cap</span>
+                    <span>Cap used</span>
                     <span>Expires</span>
                     <span>State</span>
                   </div>
-                  {agents.slice(0, 4).map((a, i) => (
-                    <div
-                      key={a.id}
-                      className="grid grid-cols-[1.6fr_1fr_1fr_auto] items-center gap-3 border-b border-border px-5 py-3.5 text-sm last:border-0 transition-colors duration-300 hover:bg-panel"
-                    >
-                      <div>
-                        <div className="font-semibold">{a.name}</div>
-                        <div className="num text-[11px] text-muted-foreground">
-                          {shortAddress(a.address)}
-                        </div>
-                      </div>
-                      <span className="num text-foreground/80">
-                        ${(1500 + i * 750).toLocaleString("en-US")}
-                      </span>
-                      <span className="num text-foreground/80">{7 + i * 3}d</span>
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                          i === 3
-                            ? "bg-warn/15 text-warn"
-                            : "bg-live/12 text-live"
-                        }`}
+                  {agents.slice(0, 4).map((a, i) => {
+                    const cap = 1500 + i * 750;
+                    const spent = i === 3 ? cap : Math.round(cap * (0.22 + i * 0.17));
+                    const pct = Math.round((spent / cap) * 100);
+                    const pending = i === 3;
+                    return (
+                      <div
+                        key={a.id}
+                        className="flex flex-col gap-2.5 border-b border-border px-5 py-3.5 text-sm last:border-0 transition-colors duration-300 hover:bg-panel sm:grid sm:grid-cols-[1.6fr_1.1fr_0.6fr_auto] sm:items-center sm:gap-3"
                       >
-                        {i === 3 ? "PENDING" : "ACTIVE"}
-                      </span>
-                    </div>
-                  ))}
+                        <div className="flex items-center justify-between gap-3 sm:block">
+                          <div>
+                            <div className="font-semibold">{a.name}</div>
+                            <div className="num text-[11px] text-muted-foreground">
+                              {shortAddress(a.address)}
+                            </div>
+                          </div>
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-[11px] font-bold sm:hidden ${
+                              pending ? "bg-warn/15 text-warn" : "bg-live/12 text-live"
+                            }`}
+                          >
+                            {pending ? "PENDING" : "ACTIVE"}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="num flex items-center justify-between text-[10px] text-muted-foreground">
+                            <span>${spent.toLocaleString("en-US")}</span>
+                            <span>${cap.toLocaleString("en-US")}</span>
+                          </div>
+                          <div className="mt-1 h-1 overflow-hidden rounded-full bg-panel">
+                            <div
+                              className={`h-full rounded-full ${
+                                pending ? "bg-warn" : "bg-brass-gradient"
+                              }`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                        <span className="num hidden text-foreground/80 sm:block">{7 + i * 3}d</span>
+                        <span
+                          className={`hidden rounded-full px-2.5 py-1 text-[11px] font-bold sm:inline-flex ${
+                            pending ? "bg-warn/15 text-warn" : "bg-live/12 text-live"
+                          }`}
+                        >
+                          {pending ? "PENDING" : "ACTIVE"}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -354,7 +379,7 @@ export default function Marketplace() {
       </section>
 
       {/* Marketplace */}
-      <section id="marketplace" className="border-b border-border bg-panel">
+      <section id="marketplace" className="scroll-mt-20 border-b border-border bg-panel">
         <div className="mx-auto max-w-[1240px] px-5 py-20">
           <Reveal>
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -441,7 +466,7 @@ export default function Marketplace() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="border-b border-border">
+      <section id="how-it-works" className="scroll-mt-20 border-b border-border">
         <div className="mx-auto max-w-[1240px] px-5 py-20">
           <Reveal>
             <p className="text-[12px] font-bold tracking-[0.18em] text-brass uppercase">Flow</p>
@@ -452,13 +477,19 @@ export default function Marketplace() {
           <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {steps.map((s, i) => (
               <Reveal key={s.n} delay={i * 90}>
-                <div className="panel hairline-hover group h-full p-7">
-                  <div className="flex items-center justify-between">
+                <div className="panel hairline-hover group relative h-full overflow-hidden p-7">
+                  <span
+                    aria-hidden
+                    className="num pointer-events-none absolute -top-3 right-1 text-6xl font-extrabold tracking-tight text-foreground/[0.045]"
+                  >
+                    {s.n}
+                  </span>
+                  <div className="relative flex items-center justify-between">
                     <span className="num text-xs font-bold text-muted-foreground">{s.n}</span>
                     <s.icon className="h-4.5 w-4.5 text-brass transition-transform duration-500 ease-instrument group-hover:scale-110" />
                   </div>
-                  <h3 className="mt-6 text-lg font-bold">{s.title}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+                  <h3 className="relative mt-6 text-lg font-bold">{s.title}</h3>
+                  <p className="relative mt-3 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
                 </div>
               </Reveal>
             ))}
@@ -467,7 +498,7 @@ export default function Marketplace() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="border-b border-border bg-panel">
+      <section id="pricing" className="scroll-mt-20 border-b border-border bg-panel">
         <div className="mx-auto max-w-[1240px] px-5 py-20">
           <Reveal>
             <div className="text-center">
@@ -602,7 +633,7 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
-      className={`cursor-pointer rounded-full border px-4 py-2.5 text-sm font-semibold transition-all duration-300 ease-instrument ${
+      className={`cursor-pointer rounded-full border px-4 py-2.5 text-sm font-semibold transition-all duration-300 ease-instrument focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
         active
           ? "border-transparent bg-primary text-primary-foreground shadow-brass"
           : "border-border bg-card text-foreground/70 hover:border-border-strong hover:text-foreground"
