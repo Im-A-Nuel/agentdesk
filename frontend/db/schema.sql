@@ -1,4 +1,4 @@
--- AgentDesk Postgres schema (Neon). Reference copy of the DDL used by scripts/db-seed.ts.
+-- AgentDesk Postgres schema (Neon). Apply with `npm run db:migrate`.
 
 CREATE TABLE IF NOT EXISTS agents (
   id TEXT PRIMARY KEY,
@@ -24,10 +24,14 @@ CREATE TABLE IF NOT EXISTS agents (
 CREATE TABLE IF NOT EXISTS hires (
   id TEXT PRIMARY KEY,
   user_wallet TEXT,
+  altana_wallet_address TEXT,
   agent_id TEXT REFERENCES agents (id),
   session_key_address TEXT NOT NULL,
-  keystore_tx_hash TEXT NOT NULL,
+  session_public_key TEXT,
+  keystore_tx_hash TEXT,
   erc8183_tx_hash TEXT,
+  erc8183_job_id TEXT,
+  revoke_tx_hash TEXT,
   spend_cap NUMERIC NOT NULL,
   spent NUMERIC NOT NULL DEFAULT 0,
   expiry_at TIMESTAMPTZ NOT NULL,
@@ -36,3 +40,5 @@ CREATE TABLE IF NOT EXISTS hires (
 );
 
 CREATE INDEX IF NOT EXISTS hires_user_wallet_idx ON hires (user_wallet);
+CREATE INDEX IF NOT EXISTS hires_altana_wallet_idx ON hires (altana_wallet_address);
+CREATE UNIQUE INDEX IF NOT EXISTS hires_erc8183_job_idx ON hires (erc8183_job_id) WHERE erc8183_job_id IS NOT NULL;

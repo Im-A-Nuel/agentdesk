@@ -1,56 +1,40 @@
-// Altana SDK wrapper.
-// TODO Phase 1: replace every function body below with the real Altana SDK call
-// (createSession / registerToKeystore / revokeSession / readSessionState).
-// This file is the ONLY place the Altana SDK may be touched (see CLAUDE.md conventions).
-// The current implementation is a deterministic demo stub so the hire flow works end-to-end.
+import { BNB_TESTNET } from "@altananetwork/sdk";
+import { createPublicClient, http, keccak256, type Address, type Hex } from "viem";
 
-import { createHash } from "node:crypto";
+const KEYSTORE_ABI = [
+  {
+    name: "isValidKey",
+    type: "function",
+    stateMutability: "view",
+    inputs: [
+      { name: "user", type: "address" },
+      { name: "keyId", type: "bytes32" },
+    ],
+    outputs: [{ type: "bool" }],
+  },
+] as const;
 
-export type CreateSessionInput = {
-  owner: string;
-  allowlist: string[];
-  spendCap: number;
-  expiresAt: string;
-};
+const publicClient = createPublicClient({
+  chain: BNB_TESTNET.chain,
+  transport: http(process.env.BSC_TESTNET_RPC_URL || BNB_TESTNET.publicRpcUrl),
+});
 
-export type SessionState = {
-  spentAmount: number;
-  remainingCap: number;
-  expiresAt: string;
-  isRevoked: boolean;
-};
-
-const hex = (seed: string, length = 64) =>
-  `0x${createHash("sha256").update(seed).digest("hex").slice(0, length)}`;
-
-export function createSession({ owner, allowlist, spendCap, expiresAt }: CreateSessionInput) {
-  const sessionKeyAddress = hex(`${owner}:${allowlist.join(",")}:${spendCap}:${expiresAt}`, 40);
-  return { sessionKeyAddress };
+export async function isSessionValid(input: {
+  walletAddress: Address;
+  sessionPublicKey: Hex;
+}): Promise<boolean> {
+  return publicClient.readContract({
+    address: BNB_TESTNET.keyStore,
+    abi: KEYSTORE_ABI,
+    functionName: "isValidKey",
+    args: [input.walletAddress, keccak256(input.sessionPublicKey)],
+  });
 }
 
-export function registerToKeystore(sessionKeyAddress: string) {
-  return { txHash: hex(`keystore:${sessionKeyAddress}`) };
-}
-
-export function revokeSession(sessionKeyAddress: string) {
-  return { txHash: hex(`revoke:${sessionKeyAddress}`) };
-}
-
-export function readSessionState(record: {
-  spent: number;
-  spendCap: number;
-  expiryAt: string;
-  status: "active" | "revoked" | "expired";
-}): SessionState {
-  const now = Date.now();
-  const expiresAt = new Date(record.expiryAt).getTime();
-  const expired = now > expiresAt;
-  const isRevoked = record.status === "revoked";
-  const spentAmount = isRevoked || expired ? record.spent : record.spent;
-  return {
-    spentAmount,
-    remainingCap: Math.max(0, record.spendCap - spentAmount),
-    expiresAt: record.expiryAt,
-    isRevoked,
-  };
+export async function isSuccessfulTransaction(hash: Hex, expectedAddress?: Address): Promise<boolean> {
+  const receipt = await publicClient.getTransactionReceipt({ hash });
+  if (receipt.status !== "success") return false;
+  if (!expectedAddress) return true;
+  const expected = expectedAddress.toLowerCase();
+  return receipt.to?.toLowerCase() === expected || receipt.logs.some((log) => log.address.toLowerCase() === expected);
 }

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono, Manrope, Sora } from "next/font/google";
 
-import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 
 import { Web3Providers } from "@/components/web3-providers";
@@ -36,7 +35,7 @@ export const metadata: Metadata = {
     template: "%s | AgentDesk",
   },
   description:
-    "Discover verified ERC-8004 agents on BNB Smart Chain and hire them with a spend cap, a contract allowlist, and an expiry enforced onchain.",
+    "Discover registered ERC-8004 agents on BNB Smart Chain testnet and hire them with a scoped Altana session.",
   openGraph: {
     title: "AgentDesk, Hire Onchain AI Agents on BNB Chain",
     description:

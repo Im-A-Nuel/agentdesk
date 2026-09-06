@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, FileCheck2, KeyRound, Wallet } from "lucide-react";
+import { ArrowRight, FileCheck2, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/site/reveal";
 import { Shell } from "@/components/site/layout";
@@ -15,21 +15,15 @@ export const metadata: Metadata = {
 const txSteps = [
   {
     tx: "TX 01",
-    icon: KeyRound,
-    title: "Session key created",
-    body: "A session key with your spend cap, contract allowlist, and expiry is created for the agent. No approval is granted yet.",
+    icon: FileCheck2,
+    title: "Session granted",
+    body: "The SDK creates a session key and registers its spend cap, contract allowlist, and expiry in the Altana Keystore.",
   },
   {
     tx: "TX 02",
-    icon: FileCheck2,
-    title: "Registered in the Keystore",
-    body: "The key is registered in the Altana Keystore onchain, so anyone can verify the exact bounds it is allowed to operate within.",
-  },
-  {
-    tx: "TX 03",
     icon: Wallet,
-    title: "Hire executes via ERC-8183",
-    body: "The hire call runs on BSC testnet and returns a tx hash you can open in the explorer. Revoke anytime with one more tx.",
+    title: "ERC-8183 job funded",
+    body: "The Altana smart wallet creates and funds a 0.1 test $U job. Revoke is an optional later transaction.",
   },
 ];
 
@@ -86,14 +80,14 @@ export default function HowItWorksPage() {
               Onchain
             </p>
             <h2 className="mt-4 max-w-2xl text-3xl font-extrabold sm:text-[2.9rem]">
-              Three transactions, all verifiable
+              Two transactions, both verifiable
             </h2>
             <p className="mt-4 max-w-xl text-muted-foreground">
               Each hire leaves a chain of hashes you can check in a BSC testnet explorer, from the
               keystore registration to the ERC-8183 hire.
             </p>
           </Reveal>
-          <div className="mt-10 grid gap-5 lg:grid-cols-3">
+          <div className="mt-10 grid gap-5 lg:grid-cols-2">
             {txSteps.map((t, i) => (
               <Reveal key={t.tx} delay={i * 90}>
                 <div className="panel h-full p-7">
@@ -140,21 +134,17 @@ export default function HowItWorksPage() {
 
       <section className="mx-auto max-w-[1240px] px-5 py-16">
         <Reveal>
-          <div className="panel relative overflow-hidden p-10 text-center shadow-panel sm:p-14">
-            <div
-              className="pointer-events-none absolute -bottom-40 left-1/2 h-80 w-[48rem] -translate-x-1/2 rounded-full opacity-[0.16] blur-[110px]"
-              style={{ background: "var(--gradient-brass)" }}
-            />
-            <div className="relative flex flex-col items-center gap-4">
+          <div className="panel p-10 text-center shadow-panel sm:p-14">
+            <div className="flex flex-col items-center gap-4">
               <span className="grid h-12 w-12 place-items-center rounded-xl bg-brass-gradient text-primary-foreground">
                 <Wallet className="h-5 w-5" />
               </span>
               <h2 className="max-w-2xl text-2xl font-extrabold sm:text-3xl">
-                You keep your wallet. Connect only when you hire.
+                Your passkey controls the Altana smart wallet.
               </h2>
               <p className="max-w-lg text-sm text-muted-foreground">
-                Browsing and reading terms needs no wallet. Signing a hire creates a scoped session
-                key, never a move of your funds.
+                Browsing needs no wallet. Hiring creates or recovers a passkey smart wallet, which
+                must hold test BNB and test $U for the onchain flow.
               </p>
               <div className="mt-2 flex flex-col items-center gap-3 sm:flex-row">
                 <Button variant="brass" size="xl" asChild>

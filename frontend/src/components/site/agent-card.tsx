@@ -1,19 +1,18 @@
 import Link from "next/link";
-import { ArrowUpRight, ShieldCheck } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { categoryBadgeVariant, categoryLabel, shortAddress, usd, type Agent } from "@/lib/agents";
+import { categoryBadgeVariant, categoryLabel, shortAddress, type Agent } from "@/lib/agents";
 
 export function AgentCard({ agent }: { agent: Agent }) {
   return (
     <Link
       href={`/agent/${agent.id}`}
-      className="glass-card hairline-hover group flex h-full flex-col p-5"
+      className="panel hairline-hover group flex h-full flex-col p-5"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <h3 className="font-display text-[17px] font-semibold">{agent.name}</h3>
-            <ShieldCheck className="h-3.5 w-3.5 text-brass opacity-70" />
           </div>
           <p className="num mt-1 text-[11px] text-muted-foreground">
             {shortAddress(agent.address)} · {agent.operator}
@@ -27,14 +26,17 @@ export function AgentCard({ agent }: { agent: Agent }) {
       <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{agent.tagline}</p>
 
       <div className="panel-inset mt-5 grid grid-cols-3 divide-x divide-border">
-        <Metric label="Reputation" value={`${agent.reputation}`} accent />
-        <Metric label="Jobs" value={agent.jobs.toLocaleString("en-US")} />
-        <Metric label="Volume" value={usd(agent.volumeUsd)} />
+        <Metric label="Score" value={`${agent.reputation}`} accent />
+        <Metric label="Feedback" value={agent.jobs.toLocaleString("en-US")} />
+        <Metric
+          label="Validations"
+          value={agent.activity.find((item) => item.label === "Validations")?.value ?? "0"}
+        />
       </div>
 
       <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
         <span className="num text-[11px] text-muted-foreground">
-          FEE {agent.feeBps} BPS · {agent.successRate}% SUCCESS
+          ERC-8004 · BSC TESTNET
         </span>
         <span className="flex items-center gap-1 text-xs font-medium text-brass transition-transform duration-300 ease-instrument group-hover:translate-x-0.5">
           Review terms

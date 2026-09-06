@@ -39,8 +39,8 @@ export function Marketplace({ initialAgents }: { initialAgents: Agent[] }) {
                   Registered agents, four categories
                 </h1>
                 <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-                  Identity, reputation, and activity come straight from the registry. Terms are
-                  shown before you sign anything.
+                  Identity and reputation fields are synchronized from 8004scan. The permission
+                  policy is shown before you sign anything.
                 </p>
               </div>
               <div className="relative w-full lg:w-72">
@@ -49,7 +49,7 @@ export function Marketplace({ initialAgents }: { initialAgents: Agent[] }) {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search agent or operator"
-                  className="h-12 rounded-full border-border bg-card pl-10 shadow-panel transition-colors duration-300 focus-visible:border-brass"
+                  className="h-12 rounded-lg border-border bg-card pl-10 shadow-panel transition-colors duration-200 focus-visible:border-brass"
                 />
               </div>
             </div>
@@ -76,16 +76,8 @@ export function Marketplace({ initialAgents }: { initialAgents: Agent[] }) {
         </div>
       </section>
 
-      <section className="relative overflow-hidden border-b border-border bg-panel">
-        <div
-          className="pointer-events-none absolute -top-28 left-[12%] h-96 w-96 rounded-full opacity-[0.12] blur-[120px]"
-          style={{ background: "var(--gradient-brass)" }}
-        />
-        <div
-          className="pointer-events-none absolute top-1/2 right-[8%] h-80 w-80 rounded-full opacity-[0.09] blur-[110px]"
-          style={{ background: "var(--gradient-brass)" }}
-        />
-        <div className="relative mx-auto max-w-[1240px] px-5 py-14">
+      <section className="border-b border-border bg-panel">
+        <div className="mx-auto max-w-[1240px] px-5 py-14">
           {filtered.length > 0 ? (
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {filtered.map((a, i) => (
@@ -119,7 +111,7 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
-      className={`cursor-pointer rounded-full border px-4 py-2.5 text-sm font-semibold transition-all duration-300 ease-instrument focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+      className={`cursor-pointer rounded-lg border px-4 py-2.5 text-sm font-semibold transition-all duration-200 ease-instrument focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
         active
           ? "border-transparent bg-primary text-primary-foreground shadow-brass"
           : "border-border bg-card text-foreground/85 hover:border-border-strong hover:text-foreground"

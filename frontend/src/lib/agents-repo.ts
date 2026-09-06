@@ -1,5 +1,4 @@
 import type { Agent } from "./agents";
-import { agents as seedAgents } from "./agents";
 import { isDbConfigured, query } from "./db";
 
 type AgentRow = {
@@ -61,21 +60,12 @@ function rowToAgent(row: AgentRow): Agent {
 export async function listAgents(options?: {
   category?: string;
   search?: string;
+  limit?: number;
 }): Promise<Agent[]> {
   const category = options?.category && options.category !== "all" ? options.category : null;
   const search = options?.search?.trim().toLowerCase() || null;
 
-  if (!isDbConfigured()) {
-    return seedAgents.filter((a) => {
-      const matchCategory = !category || a.category === category;
-      const matchSearch =
-        !search ||
-        a.name.toLowerCase().includes(search) ||
-        a.operator.toLowerCase().includes(search) ||
-        a.tagline.toLowerCase().includes(search);
-      return matchCategory && matchSearch;
-    });
-  }
+  if (!isDbConfigured()) return [];
 
   const rows = await query<AgentRow>(
     `SELECT * FROM agents
@@ -83,15 +73,16 @@ export async function listAgents(options?: {
        AND ($2::text IS NULL OR name ILIKE '%' || $2 || '%'
          OR operator ILIKE '%' || $2 || '%'
          OR tagline ILIKE '%' || $2 || '%')
-     ORDER BY name`,
-    [category, search],
+     ORDER BY name
+     LIMIT $3`,
+    [category, search, options?.limit ?? 100],
   );
   return rows.map(rowToAgent);
 }
 
 export async function getAgent(id: string): Promise<Agent | undefined> {
   if (!isDbConfigured()) {
-    return seedAgents.find((a) => a.id === id);
+    return undefined;
   }
   const rows = await query<AgentRow>("SELECT * FROM agents WHERE id = $1", [id]);
   return rows[0] ? rowToAgent(rows[0]) : undefined;

@@ -4,16 +4,27 @@ export type HireWithLive = {
   id: string;
   agentId: string;
   sessionKeyAddress: string;
-  keystoreTxHash: string;
+  sessionPublicKey: string;
+  altanaWalletAddress: string;
+  keystoreTxHash: string | null;
   erc8183TxHash: string;
+  erc8183JobId: string;
+  revokeTxHash: string | null;
   spendCap: number;
   spent: number;
   status: "active" | "revoked" | "expired";
   createdAt: string;
   expiresIn: string;
+  agent: Agent | null;
 };
 
-export type HireResult = HireWithLive;
+export type HireResult = {
+  id: string;
+  sessionKeyAddress: string;
+  keystoreTxHash: string | null;
+  erc8183TxHash: string;
+  erc8183JobId: string;
+};
 
 const REQUEST_TIMEOUT_MS = 15000;
 
@@ -82,13 +93,23 @@ export function createHire(body: {
   spendCap: number;
   durationSeconds: number;
   userWallet: string;
+  altanaWalletAddress: string;
+  sessionPublicKey: string;
+  keystoreTxHash: string | null;
+  erc8183TxHash: string;
+  erc8183JobId: string;
+  expiryAt: string;
 }): Promise<{ hire: HireResult }> {
   return request("/api/hire", { method: "POST", body: JSON.stringify(body) });
 }
 
-export function revokeHire(id: string, userWallet: string): Promise<{ revokeTxHash: string }> {
+export function recordRevoke(
+  id: string,
+  userWallet: string,
+  revokeTxHash: string,
+): Promise<{ revokeTxHash: string }> {
   return request(`/api/hire/${encodeURIComponent(id)}/revoke`, {
     method: "POST",
-    body: JSON.stringify({ userWallet }),
+    body: JSON.stringify({ userWallet, revokeTxHash }),
   });
 }

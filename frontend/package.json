@@ -2,22 +2,24 @@
   "name": "agentdesk-frontend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "generate:icons": "node scripts/generate-icons.mjs",
     "generate:og": "node scripts/generate-og.mjs",
-    "db:seed": "node --env-file=.env.local scripts/db-seed.ts",
+    "db:seed": "npm run db:migrate && npm run sync:agents",
+    "db:migrate": "node --env-file=.env.local scripts/db-migrate.ts",
+    "sync:agents": "node --env-file=.env.local scripts/sync-agents.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@altananetwork/sdk": "0.7.1",
     "@neondatabase/serverless": "^1.1.0",
     "@radix-ui/react-alert-dialog": "^1.1.23",
     "@radix-ui/react-slider": "^1.3.6",
     "@radix-ui/react-slot": "^1.2.4",
-    "@rainbow-me/rainbowkit": "^2.2.11",
-    "@tanstack/react-query": "^5.102.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.575.0",
@@ -26,8 +28,7 @@
     "react-dom": "^19.2.0",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.5.0",
-    "viem": "^2.56.3",
-    "wagmi": "^2.19.5"
+    "viem": "^2.56.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",

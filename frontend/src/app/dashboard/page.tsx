@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { useAccount } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { toast } from "sonner";
 import { ArrowUpRight, KeyRound, Loader2, RefreshCw, ShieldOff, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,14 +20,15 @@ import { Reveal } from "@/components/site/reveal";
 import { Shell } from "@/components/site/layout";
 import { CopyButton } from "@/components/site/copy-button";
 import { CountUp } from "@/components/site/count-up";
-import { categoryBadgeVariant, categoryLabel, getAgent, shortAddress } from "@/lib/agents";
-import { getMyHires, revokeHire, type HireWithLive } from "@/lib/api";
+import { categoryBadgeVariant, categoryLabel, shortAddress } from "@/lib/agents";
+import { openAltanaWallet, revokeOnchain, storedAltanaWalletAddress } from "@/lib/altana-client";
+import { getMyHires, recordRevoke, type HireWithLive } from "@/lib/api";
 
 const EXPLORER = "https://testnet.bscscan.com";
 
 export default function Dashboard() {
-  const { address, isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const [address, setAddress] = useState<string | null>(null);
+  const isConnected = Boolean(address);
 
   const [rows, setRows] = useState<HireWithLive[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,6 +36,10 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [pendingRevoke, setPendingRevoke] = useState<HireWithLive | null>(null);
+
+  useEffect(() => {
+    setAddress(storedAltanaWalletAddress());
+  }, []);
 
   const load = useCallback(
     async (wallet: string) => {
@@ -82,7 +85,15 @@ export default function Dashboard() {
     if (!address) return;
     setRevokingId(id);
     try {
-      const { revokeTxHash } = await revokeHire(id, address);
+      const target = rows?.find((hire) => hire.id === id);
+      if (!target?.sessionPublicKey) throw new Error("Session public key is unavailable");
+      const { revokeTxHash, walletAddress } = await revokeOnchain(
+        target.sessionPublicKey as `0x${string}`,
+      );
+      if (walletAddress.toLowerCase() !== address.toLowerCase()) {
+        throw new Error("The selected passkey does not own this session");
+      }
+      await recordRevoke(id, address, revokeTxHash);
       setRows((r) =>
         r?.map((h) => (h.id === id ? { ...h, status: "revoked", expiresIn: "revoked" } : h)) ??
         r,
@@ -95,9 +106,17 @@ export default function Dashboard() {
     }
   };
 
+  const connectAltana = async () => {
+    try {
+      const wallet = await openAltanaWallet();
+      setAddress(wallet.address);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not open Altana wallet");
+    }
+  };
+
   const activeRows = rows?.filter((h) => h.status === "active") ?? [];
   const totalCap = activeRows.reduce((sum, h) => sum + h.spendCap, 0);
-  const totalSpent = activeRows.reduce((sum, h) => sum + h.spent, 0);
 
   return (
     <Shell>
@@ -131,7 +150,7 @@ export default function Dashboard() {
 
           {isConnected && (
             <Reveal delay={80}>
-              <div className="panel mt-10 grid divide-y divide-border sm:grid-cols-3 sm:divide-y-0 sm:divide-x">
+              <div className="panel mt-10 grid divide-y divide-border sm:grid-cols-2 sm:divide-y-0 sm:divide-x">
                 <Summary
                   label="Active sessions"
                   value={activeRows.length}
@@ -143,11 +162,6 @@ export default function Dashboard() {
                   value={totalCap}
                   format={(n) => `$${n.toLocaleString("en-US")}`}
                 />
-                <Summary
-                  label="Spent against caps"
-                  value={totalSpent}
-                  format={(n) => `$${n.toLocaleString("en-US")}`}
-                />
               </div>
             </Reveal>
           )}
@@ -155,7 +169,7 @@ export default function Dashboard() {
       </div>
 
       <div className="mx-auto max-w-[1240px] space-y-5 px-5 py-14">
-        {!isConnected && <NotConnected onConnect={() => openConnectModal?.()} />}
+        {!isConnected && <NotConnected onConnect={connectAltana} />}
 
         {isConnected && loading && (
           <div className="space-y-5">
@@ -185,15 +199,13 @@ export default function Dashboard() {
               until you set a cap and an expiry.
             </p>
             <Button variant="brass" size="lg" className="mt-6" asChild>
-              <Link href="/">Browse the marketplace</Link>
+              <Link href="/marketplace">Browse the marketplace</Link>
             </Button>
           </div>
         )}
 
 {rows?.map((h, i) => {
-          const agent = getAgent(h.agentId);
-          const pct = Math.min(100, Math.round((h.spent / h.spendCap) * 100));
-          const remaining = Math.max(0, h.spendCap - h.spent);
+          const agent = h.agent;
           const isActive = h.status === "active";
           const isRevoking = revokingId === h.id;
           const statusVariant: "success" | "destructive" | "outline" = isActive
@@ -212,7 +224,7 @@ export default function Dashboard() {
                   <div className="flex flex-wrap items-center gap-3">
                     <span
                       className={`h-2 w-2 rounded-full ${
-                        isActive ? "pulse-live bg-live" : "bg-destructive"
+                        isActive ? "bg-live" : "bg-destructive"
                       }`}
                     />
                     <h2 className="font-display text-lg font-semibold">{agent?.name}</h2>
@@ -256,46 +268,13 @@ export default function Dashboard() {
 
                 <div className="grid gap-6 px-6 py-6 lg:grid-cols-[1.2fr_1fr]">
                   <div>
-                    <div className="flex items-end justify-between">
-                      <span className="text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
-                        Spend against cap
-                      </span>
-                      <span className="num text-sm text-foreground">
-                        ${h.spent.toLocaleString("en-US")}
-                        <span className="text-muted-foreground">
-                          {" "}
-                          / ${h.spendCap.toLocaleString("en-US")}
-                        </span>
-                      </span>
-                    </div>
-                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-panel">
-                      <div
-                        className={`h-full rounded-full transition-[width] duration-1000 ease-instrument ${
-                          isActive ? "bg-brass-gradient" : "bg-destructive/70"
-                        }`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <div className="num mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[10px] text-muted-foreground">
-                      <span>
-                        {pct}% used
-                        {isActive && (
-                          <span className="text-live">
-                            {" "}
-                            · ${remaining.toLocaleString("en-US")} remaining
-                          </span>
-                        )}
-                      </span>
-                      <span>
-                        {isActive ? `expires in ${h.expiresIn}` : "permission ended"}
-                      </span>
-                    </div>
-
-                    <dl className="mt-6 grid gap-3 text-xs sm:grid-cols-2">
+                    <dl className="grid gap-3 text-xs sm:grid-cols-2">
+                      <Field k="Spend cap" v={`${h.spendCap.toLocaleString("en-US")} test $U`} />
+                      <Field k="State" v={isActive ? `expires in ${h.expiresIn}` : "permission ended"} />
                       <Field k="Session key" v={shortAddress(h.sessionKeyAddress)} />
                       <Field k="Granted" v={h.createdAt} />
                       <Field k="Allowlist" v={`${agent?.allowlist.length ?? 0} contracts`} />
-                      <Field k="Fee" v={`${agent?.feeBps ?? 0} bps`} />
+                      <Field k="ERC-8183 job" v={h.erc8183JobId ?? "confirmed"} />
                     </dl>
                   </div>
 
@@ -304,8 +283,11 @@ export default function Dashboard() {
                       Onchain proof
                     </p>
                     <div className="mt-3 space-y-3">
-                      <TxRow label="Keystore registration" hash={h.keystoreTxHash} />
+                      {h.keystoreTxHash && (
+                        <TxRow label="Keystore registration" hash={h.keystoreTxHash} />
+                      )}
                       <TxRow label="ERC-8183 hire" hash={h.erc8183TxHash} />
+                      {h.revokeTxHash && <TxRow label="Session revoke" hash={h.revokeTxHash} />}
                     </div>
                   </div>
                 </div>
@@ -327,7 +309,7 @@ export default function Dashboard() {
             <AlertDialogDescription>
               The session key for{" "}
               <span className="font-semibold text-foreground">
-                {pendingRevoke ? getAgent(pendingRevoke.agentId)?.name : ""}
+                {pendingRevoke?.agent?.name ?? "this agent"}
               </span>{" "}
               will be invalidated in the Altana Keystore. The revoke transaction is final and
               cannot be undone.
@@ -358,14 +340,14 @@ function NotConnected({ onConnect }: { onConnect: () => void }) {
   return (
     <div className="panel p-12 text-center">
       <Wallet className="mx-auto h-6 w-6 text-brass" />
-      <p className="mt-4 text-base font-semibold text-foreground">Connect your wallet to continue</p>
+      <p className="mt-4 text-base font-semibold text-foreground">Open your Altana wallet</p>
       <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-        The dashboard reads session state live from the Altana Keystore for your address. No
-        session keys or funds are moved by connecting.
+        Your passkey recovers the same smart wallet address. Reading the dashboard does not move
+        funds or change a session.
       </p>
       <Button variant="brass" size="lg" className="mt-6" onClick={onConnect}>
-        <Wallet />
-        Connect wallet
+        <KeyRound />
+        Open Altana wallet
       </Button>
     </div>
   );

@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { BNB_TESTNET } from "@altananetwork/sdk";
+import type { Address, Hex } from "viem";
 
-import { revokeSession } from "@/lib/altana";
+import { isSessionValid, isSuccessfulTransaction } from "@/lib/altana";
 import { getHire, updateHire } from "@/lib/hire-store";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -10,7 +12,7 @@ function error(status: number, code: string, message: string) {
 }
 
 export async function POST(req: NextRequest, { params }: Ctx) {
-  let body: { userWallet?: string } | null = null;
+  let body: { userWallet?: string; revokeTxHash?: string } | null = null;
   try {
     body = await req.json();
   } catch {
@@ -31,15 +33,29 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   }
 
   const userWallet = body?.userWallet;
-  // Enforce ownership for real sessions. Demo seed rows (userWallet null) stay revocable
-  // so the dashboard demo keeps working; real sessions belong to a specific wallet.
   if (hire.userWallet && (!userWallet || hire.userWallet.toLowerCase() !== userWallet.toLowerCase())) {
     return error(403, "NOT_OWNER", "You do not own this session");
   }
+  const revokeTxHash = body?.revokeTxHash;
+  if (!revokeTxHash || !/^0x[a-fA-F0-9]{64}$/.test(revokeTxHash)) {
+    return error(400, "INVALID_REVOKE_TX", "A valid revoke transaction hash is required");
+  }
+  if (!hire.altanaWalletAddress || !hire.sessionPublicKey) {
+    return error(409, "LEGACY_HIRE", "This legacy demo session has no onchain proof");
+  }
 
   try {
-    const { txHash: revokeTxHash } = revokeSession(hire.sessionKeyAddress);
-    await updateHire(id, { status: "revoked" });
+    const [txValid, sessionValid] = await Promise.all([
+      isSuccessfulTransaction(revokeTxHash as Hex, BNB_TESTNET.keyStore),
+      isSessionValid({
+        walletAddress: hire.altanaWalletAddress as Address,
+        sessionPublicKey: hire.sessionPublicKey as Hex,
+      }),
+    ]);
+    if (!txValid || sessionValid) {
+      return error(422, "REVOKE_NOT_CONFIRMED", "Revocation is not confirmed in Keystore");
+    }
+    await updateHire(id, { status: "revoked", revokeTxHash });
     return NextResponse.json({ revokeTxHash });
   } catch {
     return error(500, "INTERNAL", "Could not revoke the session. Please try again.");

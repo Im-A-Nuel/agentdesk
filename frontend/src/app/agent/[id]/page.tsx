@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { getAgent } from "@/lib/agents";
+import { getAgent, listAgents } from "@/lib/agents-repo";
 import { AgentDetail } from "./agent-detail";
 
 export async function generateMetadata({
@@ -10,7 +10,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const agent = getAgent(id);
+  const agent = await getAgent(id);
   if (!agent) {
     return { title: "Agent not found" };
   }
@@ -26,7 +26,10 @@ export async function generateMetadata({
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const agent = getAgent(id);
+  const agent = await getAgent(id);
   if (!agent) notFound();
-  return <AgentDetail agent={agent} />;
+  const related = (await listAgents({ category: agent.category }))
+    .filter((candidate) => candidate.id !== agent.id)
+    .slice(0, 2);
+  return <AgentDetail agent={agent} related={related} />;
 }

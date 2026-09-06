@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { useAccount } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -13,8 +11,8 @@ import {
   Layers,
   Loader2,
   Lock,
+  ExternalLink,
   Timer,
-  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,46 +21,104 @@ import { Reveal } from "@/components/site/reveal";
 import { Shell } from "@/components/site/layout";
 import { CopyButton } from "@/components/site/copy-button";
 import { TokenIcon } from "@/components/site/token-icon";
-import { agents, categoryBadgeVariant, categoryLabel, shortAddress, usd, type Agent } from "@/lib/agents";
+import { categoryBadgeVariant, categoryLabel, shortAddress, type Agent } from "@/lib/agents";
+import {
+  claimTestPaymentToken,
+  grantSessionAndHire,
+  openAltanaWallet,
+  readAltanaBalances,
+  storedAltanaWalletAddress,
+  type AltanaBalances,
+  type AltanaWallet,
+} from "@/lib/altana-client";
 import { createHire, type HireResult } from "@/lib/api";
 
 const EXPLORER = "https://testnet.bscscan.com";
 
 const durations = [7, 14, 30, 90];
 
-export function AgentDetail({ agent }: { agent: Agent }) {
+export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[] }) {
   const [cap, setCap] = useState(2500);
   const [days, setDays] = useState(14);
   const [granted, setGranted] = useState(false);
   const [hiring, setHiring] = useState(false);
   const [hireError, setHireError] = useState<string | null>(null);
   const [hireResult, setHireResult] = useState<HireResult | null>(null);
-  const { address, isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const [altanaWallet, setAltanaWallet] = useState<AltanaWallet | null>(null);
+  const [altanaAddress, setAltanaAddress] = useState<string | null>(null);
+  const [balances, setBalances] = useState<AltanaBalances | null>(null);
+  const [preparingWallet, setPreparingWallet] = useState(false);
+  const [claimingTokens, setClaimingTokens] = useState(false);
 
-  const related = useMemo(
-    () => agents.filter((a) => a.category === agent.category && a.id !== agent.id).slice(0, 2),
-    [agent],
-  );
+  useEffect(() => {
+    setAltanaAddress(storedAltanaWalletAddress());
+  }, []);
 
   const expiry = useMemo(() => {
     const d = new Date(Date.now() + days * 86_400_000);
     return d.toISOString().slice(0, 10);
   }, [days]);
 
+  const refreshBalances = async (wallet: AltanaWallet) => {
+    const next = await readAltanaBalances(wallet);
+    setBalances(next);
+  };
+
+  const prepareWallet = async () => {
+    setPreparingWallet(true);
+    setHireError(null);
+    try {
+      const wallet = await openAltanaWallet();
+      setAltanaWallet(wallet);
+      setAltanaAddress(wallet.address);
+      await refreshBalances(wallet);
+      toast.success("Altana wallet ready");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not open the Altana wallet";
+      setHireError(message);
+      toast.error(message);
+    } finally {
+      setPreparingWallet(false);
+    }
+  };
+
+  const claimTokens = async () => {
+    if (!altanaWallet) return;
+    setClaimingTokens(true);
+    setHireError(null);
+    try {
+      await claimTestPaymentToken(altanaWallet);
+      await refreshBalances(altanaWallet);
+      toast.success("10 test $U received");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not claim test $U";
+      setHireError(message);
+      toast.error(message);
+    } finally {
+      setClaimingTokens(false);
+    }
+  };
+
   const handleHire = async () => {
-    if (!isConnected || !address) {
-      openConnectModal?.();
+    if (!altanaWallet) {
+      await prepareWallet();
       return;
     }
     setHiring(true);
     setHireError(null);
     try {
+      const onchain = await grantSessionAndHire({
+        wallet: altanaWallet,
+        agent,
+        spendCap: cap,
+        durationSeconds: days * 86_400,
+      });
       const { hire } = await createHire({
         agentId: agent.id,
         spendCap: cap,
         durationSeconds: days * 86_400,
-        userWallet: address,
+        userWallet: onchain.altanaWalletAddress,
+        ...onchain,
       });
       setHireResult(hire);
       setGranted(true);
@@ -102,8 +158,8 @@ export function AgentDetail({ agent }: { agent: Agent }) {
               </div>
               <div className="panel grid grid-cols-3 divide-x divide-border">
                 <Stat label="Reputation" value={`${agent.reputation}`} accent />
-                <Stat label="Success" value={`${agent.successRate}%`} />
-                <Stat label="Fee" value={`${agent.feeBps} bps`} />
+                <Stat label="Feedbacks" value={`${agent.jobs}`} />
+                <Stat label="Validations" value={`${agent.activity[1]?.value ?? 0}`} />
               </div>
             </div>
           </Reveal>
@@ -143,20 +199,6 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                     </div>
                   </div>
                 ))}
-              </div>
-              <div className="grid divide-y divide-border border-t border-border sm:grid-cols-2 sm:divide-y-0 sm:divide-x">
-                <div className="px-6 py-5">
-                  <div className="num text-2xl">{agent.jobs.toLocaleString("en-US")}</div>
-                  <div className="mt-1.5 text-[11px] tracking-[0.12em] text-muted-foreground uppercase">
-                    Lifetime jobs
-                  </div>
-                </div>
-                <div className="px-6 py-5">
-                  <div className="num text-2xl">{usd(agent.volumeUsd)}</div>
-                  <div className="mt-1.5 text-[11px] tracking-[0.12em] text-muted-foreground uppercase">
-                    Lifetime volume routed
-                  </div>
-                </div>
               </div>
             </section>
           </Reveal>
@@ -302,16 +344,54 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                   <Row k="Cap" v={`$${cap.toLocaleString("en-US")}`} />
                   <Row k="Expiry" v={expiry} />
                   <Row k="Allowlist" v={`${agent.allowlist.length} contracts`} />
-                  <Row k="Fee" v={`${agent.feeBps} bps per fill`} />
+                  <Row k="Escrow" v="0.1 test $U" />
                   <Row k="Revoke" v="anytime, onchain" />
                 </dl>
+              </div>
+
+              <div className="rounded-lg border border-border p-4">
+                <p className="text-sm font-semibold">Altana passkey wallet</p>
+                {altanaAddress ? (
+                  <>
+                    <p className="num mt-2 flex items-start gap-2 break-all text-[11px] text-muted-foreground">
+                      {altanaAddress}
+                      <CopyButton value={altanaAddress} label="Copy Altana wallet address" />
+                    </p>
+                    {balances && (
+                      <p className="num mt-2 text-[11px] text-muted-foreground">
+                        {Number(balances.native).toFixed(4)} tBNB, {balances.paymentToken} test $U
+                      </p>
+                    )}
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                      <Button variant="steel" size="sm" asChild>
+                        <a href="https://testnet.bnbchain.org/faucet-smart" target="_blank" rel="noreferrer">
+                          Fund tBNB
+                          <ExternalLink />
+                        </a>
+                      </Button>
+                      <Button
+                        variant="steel"
+                        size="sm"
+                        disabled={!altanaWallet || claimingTokens}
+                        onClick={claimTokens}
+                      >
+                        {claimingTokens && <Loader2 className="animate-spin" />}
+                        {claimingTokens ? "Claiming $U" : "Claim 10 test $U"}
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                    Create a device-bound passkey wallet. The private key stays on this device.
+                  </p>
+                )}
               </div>
 
               <Button
                 variant={granted ? "outline" : "brass"}
                 size="lg"
                 className="w-full"
-                disabled={hiring || granted}
+                disabled={hiring || preparingWallet || granted}
                 onClick={handleHire}
               >
                 {hiring ? (
@@ -324,15 +404,15 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                     <Lock className="text-live" />
                     Session locked
                   </>
-                ) : isConnected ? (
+                ) : altanaAddress ? (
                   <>
                     <KeyRound />
                     Hire {agent.name}
                   </>
                 ) : (
                   <>
-                    <Wallet />
-                    Connect wallet to hire
+                    <KeyRound />
+                    {preparingWallet ? "Opening passkey..." : "Create Altana passkey"}
                   </>
                 )}
               </Button>
@@ -350,8 +430,8 @@ export function AgentDetail({ agent }: { agent: Agent }) {
               >
                 <div className="panel-inset space-y-2.5 p-4">
                   <p className="flex items-center gap-2 text-xs text-live">
-                    <span className="pulse-live h-1.5 w-1.5 rounded-full bg-live" />
-                    Session registered in the Keystore
+                    <span className="h-1.5 w-1.5 rounded-full bg-live" />
+                    Session and job confirmed onchain
                   </p>
                   {hireResult && (
                     <>
@@ -360,18 +440,20 @@ export function AgentDetail({ agent }: { agent: Agent }) {
                         <span>{shortAddress(hireResult.sessionKeyAddress)}</span>
                         <CopyButton value={hireResult.sessionKeyAddress} label="Copy session key" />
                       </p>
-                      <p className="num flex items-start gap-2 text-[10px] break-all text-muted-foreground">
-                        <span className="shrink-0">keystore</span>
-                        <a
-                          href={`${EXPLORER}/tx/${hireResult.keystoreTxHash}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="transition-colors duration-300 hover:text-brass"
-                        >
-                          {hireResult.keystoreTxHash}
-                        </a>
-                        <CopyButton value={hireResult.keystoreTxHash} label="Copy keystore tx" />
-                      </p>
+                      {hireResult.keystoreTxHash && (
+                        <p className="num flex items-start gap-2 text-[10px] break-all text-muted-foreground">
+                          <span className="shrink-0">keystore</span>
+                          <a
+                            href={`${EXPLORER}/tx/${hireResult.keystoreTxHash}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="transition-colors duration-300 hover:text-brass"
+                          >
+                            {hireResult.keystoreTxHash}
+                          </a>
+                          <CopyButton value={hireResult.keystoreTxHash} label="Copy keystore tx" />
+                        </p>
+                      )}
                       <p className="num flex items-start gap-2 text-[10px] break-all text-muted-foreground">
                         <span className="shrink-0">erc8183</span>
                         <a
@@ -393,8 +475,8 @@ export function AgentDetail({ agent }: { agent: Agent }) {
               </div>
 
               <p className="text-[11px] leading-relaxed text-muted-foreground">
-                Demo flow on BSC testnet. Session status shown anywhere in AgentDesk is read live
-                from the Keystore, never from a cached record.
+                BSC testnet only. AgentDesk verifies the Keystore grant and funded ERC-8183 job
+                before saving the hire.
               </p>
             </div>
           </aside>

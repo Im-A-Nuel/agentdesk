@@ -5,10 +5,8 @@
 
 /*
  * AgentDesk design system.
- * Bright product-marketing surface in the spirit of a modern SaaS site:
- * white canvas, near-black ink type, one vivid violet to pink accent,
- * pill controls, soft elevated panels, tabular mono numerals for
- * addresses, hashes and limits. All colors in oklch.
+ * Ledger-like product surface: warm paper, near-black ink, restrained
+ * brass accents, firm panels, and tabular numerals for chain evidence.
  */
 
 @theme inline {
@@ -81,14 +79,14 @@
 
   --primary: oklch(0.19 0.01 275);
   --primary-foreground: oklch(1 0 0);
-  --brass: oklch(0.58 0.23 292);
-  --brass-dim: oklch(0.68 0.2 340);
+  --brass: oklch(0.56 0.13 68);
+  --brass-dim: oklch(0.68 0.11 76);
 
   --secondary: oklch(0.965 0.005 275);
   --secondary-foreground: oklch(0.24 0.012 275);
   --muted: oklch(0.968 0.004 275);
   --muted-foreground: oklch(0.52 0.014 275);
-  --accent: oklch(0.955 0.008 292);
+  --accent: oklch(0.955 0.018 75);
   --accent-foreground: oklch(0.24 0.012 275);
 
   --destructive: oklch(0.56 0.22 22);
@@ -100,29 +98,24 @@
   --border: oklch(0.19 0.01 275 / 10%);
   --border-strong: oklch(0.19 0.01 275 / 20%);
   --input: oklch(0.19 0.01 275 / 14%);
-  --ring: oklch(0.58 0.23 292);
+  --ring: oklch(0.56 0.13 68);
 
-  --chart-1: oklch(0.58 0.23 292);
-  --chart-2: oklch(0.68 0.2 340);
+  --chart-1: oklch(0.56 0.13 68);
+  --chart-2: oklch(0.68 0.11 76);
   --chart-3: oklch(0.72 0.14 225);
   --chart-4: oklch(0.6 0.16 155);
   --chart-5: oklch(0.52 0.014 275);
 
   --sidebar: oklch(0.985 0.003 275);
   --sidebar-foreground: oklch(0.24 0.012 275);
-  --sidebar-primary: oklch(0.58 0.23 292);
+  --sidebar-primary: oklch(0.56 0.13 68);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.955 0.008 292);
+  --sidebar-accent: oklch(0.955 0.018 75);
   --sidebar-accent-foreground: oklch(0.24 0.012 275);
   --sidebar-border: oklch(0.19 0.01 275 / 10%);
-  --sidebar-ring: oklch(0.58 0.23 292);
+  --sidebar-ring: oklch(0.56 0.13 68);
 
-  --gradient-brass: linear-gradient(
-    100deg,
-    oklch(0.72 0.14 225),
-    oklch(0.58 0.23 292) 45%,
-    oklch(0.7 0.21 348)
-  );
+  --gradient-brass: linear-gradient(100deg, oklch(0.53 0.12 64), oklch(0.66 0.12 78));
   --gradient-ink: linear-gradient(180deg, oklch(1 0 0), oklch(0.975 0.004 275));
   --shadow-panel: 0 1px 2px oklch(0.19 0.01 275 / 6%), 0 18px 44px -26px oklch(0.19 0.01 275 / 24%);
   --shadow-brass: 0 10px 26px -14px oklch(0.19 0.01 275 / 45%);
@@ -192,13 +185,10 @@
 }
 
 @utility glass-card {
-  background: color-mix(in oklab, var(--color-card) 62%, transparent);
-  border: 1px solid color-mix(in oklab, #ffffff 55%, var(--color-border));
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
-  backdrop-filter: blur(18px) saturate(150%);
-  box-shadow:
-    var(--shadow-panel),
-    inset 0 1px 0 color-mix(in oklab, #ffffff 75%, transparent);
+  box-shadow: var(--shadow-panel);
 }
 
 @utility text-brass-gradient {
