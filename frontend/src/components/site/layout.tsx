@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { ChevronRight, KeyRound, Loader2, Menu, X } from "lucide-react";
+import { Check, ChevronRight, Copy, KeyRound, Loader2, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/site/brand-mark";
 import { openAltanaWallet, storedAltanaWalletAddress } from "@/lib/altana-client";
@@ -48,6 +48,7 @@ const nav = [
 function ConnectWalletButton() {
   const [address, setAddress] = useState<string | null>(null);
   const [opening, setOpening] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setAddress(storedAltanaWalletAddress());
@@ -66,16 +67,29 @@ function ConnectWalletButton() {
     }
   };
 
+  const copyWalletAddress = async () => {
+    if (!address) return;
+
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      toast.success("Wallet address copied");
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Could not copy wallet address");
+    }
+  };
+
   return (
     <Button
-      aria-label={opening ? "Opening Altana wallet" : address ? `Open Altana wallet ${shortAddress(address)}` : "Open Altana wallet"}
+      aria-label={opening ? "Opening Altana wallet" : address ? `Copy wallet address ${address}` : "Open Altana wallet"}
       variant={address ? "outline" : "brass"}
       size="sm"
       className={`h-11 px-3 sm:px-4 ${address ? "num" : ""}`}
       disabled={opening}
-      onClick={openWallet}
+      onClick={address ? copyWalletAddress : openWallet}
     >
-      {opening ? <Loader2 className="animate-spin" /> : <KeyRound />}
+      {opening ? <Loader2 className="animate-spin" /> : address ? copied ? <Check className="text-live" /> : <Copy /> : <KeyRound />}
       <span className="hidden sm:inline">{opening ? "Opening" : address ? shortAddress(address) : "Altana wallet"}</span>
     </Button>
   );
