@@ -24,6 +24,7 @@ import { TokenIcon } from "@/components/site/token-icon";
 import { categoryBadgeVariant, categoryLabel, shortAddress, type Agent } from "@/lib/agents";
 import {
   claimTestPaymentToken,
+  clearStoredAltanaWallet,
   grantSessionAndHire,
   openAltanaWallet,
   readAltanaBalances,
@@ -122,6 +123,15 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
     } finally {
       setClaimingTokens(false);
     }
+  };
+
+  const startWithNewWallet = () => {
+    clearStoredAltanaWallet();
+    setAltanaWallet(null);
+    setAltanaAddress(null);
+    setBalances(null);
+    setHireError(null);
+    toast.info("Create a new passkey wallet, then keep this tab open while funding it.");
   };
 
   const handleHire = async () => {
@@ -518,9 +528,19 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
               </Button>
 
               {hireError && (
-                <p className="rounded-lg border border-destructive/40 bg-destructive/12 px-3 py-2 text-xs text-destructive" role="alert">
-                  {hireError}
-                </p>
+                <div className="rounded-lg border border-destructive/40 bg-destructive/12 px-3 py-2 text-xs text-destructive" role="alert">
+                  <p>{hireError}</p>
+                  {hireError.includes("no keys registered in KeyStore") && (
+                    <>
+                      <p className="mt-2 leading-relaxed">
+                        This wallet was created but was not initialized onchain. Start fresh, use a new passkey, open the tBNB faucet in its new tab, then return to this tab without refreshing to claim test $U.
+                      </p>
+                      <Button variant="outline" size="sm" className="mt-3" onClick={startWithNewWallet}>
+                        Use a new passkey wallet
+                      </Button>
+                    </>
+                  )}
+                </div>
               )}
 
               <div

@@ -51,11 +51,18 @@ export function storedAltanaWalletAddress(): Address | null {
   return value && /^0x[a-fA-F0-9]{40}$/.test(value) ? (value as Address) : null;
 }
 
+export function clearStoredAltanaWallet() {
+  window.localStorage.removeItem(walletStorageKey);
+}
+
 export async function openAltanaWallet(): Promise<AltanaWallet> {
   const existing = storedAltanaWalletAddress();
   const wallet = existing
     ? await altana.recoverFromPasskey({ rpId: relyingPartyId() })
-    : await altana.createPasskeyWallet({ name: "AgentDesk", rpId: relyingPartyId() });
+    : await altana.createPasskeyWallet({
+        name: `AgentDesk ${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+        rpId: relyingPartyId(),
+      });
   window.localStorage.setItem(walletStorageKey, wallet.address);
   return wallet;
 }
