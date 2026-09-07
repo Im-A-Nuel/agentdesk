@@ -32,16 +32,18 @@ export function LandingIntro() {
 
   return (
     <div className={`landing-intro ${leaving ? "landing-intro-leaving" : ""}`} role="status" aria-label="Loading AgentDesk">
-      <div className="landing-intro-grid" aria-hidden="true" />
       <div className="landing-intro-content">
-        <div className="landing-intro-mark-wrap" aria-hidden="true">
-          <span className="landing-intro-ring landing-intro-ring-one" />
-          <span className="landing-intro-ring landing-intro-ring-two" />
-          <BrandMark className="landing-intro-mark" />
+        <div className="landing-intro-engine" aria-hidden="true">
+          <span className="landing-intro-orbit landing-intro-orbit-outer"><i /><i /><i /></span>
+          <span className="landing-intro-orbit landing-intro-orbit-middle"><i /><i /></span>
+          <span className="landing-intro-orbit landing-intro-orbit-inner" />
+          <span className="landing-intro-node landing-intro-node-one" />
+          <span className="landing-intro-node landing-intro-node-two" />
+          <span className="landing-intro-core"><BrandMark className="landing-intro-mark" /></span>
         </div>
         <div className="mt-8 text-center">
-          <p className="num text-[10px] font-bold tracking-[0.28em] text-brass uppercase">AgentDesk</p>
-          <p className="mt-3 text-xl font-semibold tracking-tight text-foreground">Preparing permission ledger</p>
+          <p className="num text-[10px] font-bold tracking-[0.32em] text-brass uppercase">AgentDesk / protocol online</p>
+          <p className="mt-3 text-xl font-semibold tracking-tight text-foreground">Authority, scoped.</p>
         </div>
         <div className="landing-intro-progress mt-7" aria-hidden="true"><span /></div>
         <div className="mt-4 flex items-center justify-between gap-8 num text-[10px] text-muted-foreground">
