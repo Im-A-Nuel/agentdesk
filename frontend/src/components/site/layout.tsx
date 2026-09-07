@@ -43,7 +43,6 @@ const nav = [
   { label: "Marketplace", href: "/marketplace" },
   { label: "Dashboard", href: "/dashboard" },
   { label: "How it works", href: "/how-it-works" },
-  { label: "Pricing", href: "/pricing" },
 ];
 
 function ConnectWalletButton() {
@@ -209,7 +208,6 @@ export function SiteFooter() {
           title="Resources"
           items={[
             { label: "How it works", href: "/how-it-works" },
-            { label: "Pricing", href: "/pricing" },
             { label: "Dashboard", href: "/dashboard" },
           ]}
         />

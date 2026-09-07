@@ -12,6 +12,11 @@ import { steps, triad } from "@/lib/content";
 export const dynamic = "force-dynamic";
 
 const proofPoints = ["Passkey wallet", "Scoped session", "Funded ERC-8183 job"];
+const permissionArt = [
+  "/images/permission-daily-limit.webp",
+  "/images/permission-allowlist.webp",
+  "/images/permission-expiry.webp",
+];
 
 export default async function LandingPage() {
   const agents = await listAgents({ limit: 3 });
@@ -95,8 +100,10 @@ export default async function LandingPage() {
               <Reveal key={item.title} delay={index * 90}>
                 <article className="permission-card group relative h-full overflow-hidden border border-background/15 bg-background/[0.055] p-7 backdrop-blur-sm sm:p-8">
                   <span className="permission-index num" aria-hidden="true">0{index + 1}</span>
-                  <div className="permission-icon"><item.icon className="h-6 w-6" strokeWidth={1.7} /></div>
-                  <h3 className="mt-10 text-2xl font-bold">{item.title}</h3>
+                  <div className="permission-art" aria-hidden="true">
+                    <Image src={permissionArt[index]} alt="" width={512} height={512} className="h-full w-full object-contain" />
+                  </div>
+                  <h3 className="mt-5 text-2xl font-bold">{item.title}</h3>
                   <p className="mt-4 max-w-sm text-sm leading-7 text-background/60">{item.body}</p>
                   <div className="permission-rule mt-9" aria-hidden="true"><span style={{ width: `${82 - index * 13}%` }} /></div>
                 </article>
@@ -115,16 +122,16 @@ export default async function LandingPage() {
               <p className="num text-xs text-muted-foreground">4 steps / 2 public transactions / 1 revocable key</p>
             </div>
           </Reveal>
-          <div className="flow-track mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {steps.map((step, index) => (
-              <Reveal key={step.n} delay={index * 90} className="relative">
-                <article className="flow-card group h-full p-6 sm:p-7">
+          <div className="flow-carousel mt-14" role="region" aria-label="Agent hiring flow">
+            <div className="flow-carousel-track">
+              {[...steps, ...steps].map((step, index) => (
+                <article key={`${step.n}-${index}`} aria-hidden={index >= steps.length} className={`flow-card group p-6 sm:p-7 ${index >= steps.length ? "flow-card-duplicate" : ""}`}>
                   <div className="flex items-center justify-between"><span className="num text-xs font-bold text-brass">{step.n}</span><span className="flow-icon"><step.icon className="h-5 w-5" strokeWidth={1.8} /></span></div>
                   <h3 className="mt-12 text-xl font-bold">{step.title}</h3>
                   <p className="mt-3 text-sm leading-6 text-muted-foreground">{step.body}</p>
                 </article>
-              </Reveal>
-            ))}
+              ))}
+            </div>
           </div>
           <Reveal delay={120}>
             <div className="cta-ledger mt-14 grid gap-7 px-6 py-8 sm:px-9 lg:grid-cols-[1fr_auto] lg:items-center">
