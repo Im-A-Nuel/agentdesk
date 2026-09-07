@@ -128,6 +128,17 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
       await refreshBalances(altanaWallet);
       toast.success("10 test $U received");
     } catch (err) {
+      try {
+        const refreshedBalances = await readAltanaBalances(altanaWallet);
+        setBalances(refreshedBalances);
+        if (
+          refreshedBalances.paymentTokenRaw &&
+          BigInt(refreshedBalances.paymentTokenRaw) >= 100_000_000_000_000_000n
+        ) {
+          toast.success("10 test $U is available. You can hire the agent now.");
+          return;
+        }
+      } catch {}
       const message = onchainErrorMessage(err, "claim");
       setHireError(message);
       toast.error(message);
