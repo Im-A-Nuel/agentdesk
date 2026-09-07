@@ -4,6 +4,7 @@ import { ArrowRight, Check, ExternalLink, Fingerprint, KeyRound, ShieldCheck } f
 
 import { AgentCard } from "@/components/site/agent-card";
 import { FlowCarousel } from "@/components/site/flow-carousel";
+import { LandingIntro } from "@/components/site/landing-intro";
 import { Shell } from "@/components/site/layout";
 import { Reveal } from "@/components/site/reveal";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ export default async function LandingPage() {
 
   return (
     <Shell>
+      <LandingIntro />
       <section className="hero-surface relative overflow-hidden border-b border-border">
         <div className="hero-orbit hero-orbit-one" aria-hidden="true" />
         <div className="hero-orbit hero-orbit-two" aria-hidden="true" />
