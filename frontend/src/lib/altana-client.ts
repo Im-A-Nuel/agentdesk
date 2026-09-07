@@ -5,7 +5,9 @@ import {
   createClient,
   ERC8183_ADDRESSES,
   hireErc8183Agent,
+  signerFromPasskey,
   type GrantSessionResult,
+  type PasskeyCredential,
 } from "@altananetwork/sdk";
 import { encodeFunctionData, formatEther, parseEther, parseUnits, type Address, type Hex } from "viem";
 
@@ -13,6 +15,7 @@ import type { Agent } from "./agents";
 
 const altana = createClient({ chains: [BNB_TESTNET] });
 const walletStorageKey = "agentdesk:altana-wallet";
+const walletPasskeyStorageKey = "agentdesk:altana-passkey";
 const orphanSessionStorageKey = "agentdesk:orphan-session";
 const hireBudget = parseUnits("0.1", 18);
 const nativeFeeAllowance = parseEther("0.02");
@@ -54,19 +57,42 @@ export function storedAltanaWalletAddress(): Address | null {
 
 export function clearStoredAltanaWallet() {
   window.localStorage.removeItem(walletStorageKey);
+  window.localStorage.removeItem(walletPasskeyStorageKey);
+  window.dispatchEvent(new Event(walletChangeEvent));
+}
+
+function storedPasskeyCredential(): PasskeyCredential | null {
+  const value = window.localStorage.getItem(walletPasskeyStorageKey);
+  if (!value) return null;
+
+  try {
+    const credential = JSON.parse(value) as PasskeyCredential;
+    return credential.kind === "webauthn" && typeof credential.id === "string" && /^0x[a-fA-F0-9]+$/.test(credential.publicKey)
+      ? credential
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistAltanaWallet(wallet: AltanaWallet) {
+  window.localStorage.setItem(walletStorageKey, wallet.address);
+  window.localStorage.setItem(walletPasskeyStorageKey, JSON.stringify(wallet.signer.credential));
   window.dispatchEvent(new Event(walletChangeEvent));
 }
 
 export async function openAltanaWallet(): Promise<AltanaWallet> {
   const existing = storedAltanaWalletAddress();
-  const wallet = existing
-    ? await altana.recoverFromPasskey({ rpId: relyingPartyId() })
-    : await altana.createPasskeyWallet({
-        name: `AgentDesk ${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
-        rpId: relyingPartyId(),
-      });
-  window.localStorage.setItem(walletStorageKey, wallet.address);
-  window.dispatchEvent(new Event(walletChangeEvent));
+  const credential = storedPasskeyCredential();
+  const wallet = existing && credential
+    ? { address: existing, signer: signerFromPasskey(credential) }
+    : existing
+      ? await altana.recoverFromPasskey({ rpId: relyingPartyId() })
+      : await altana.createPasskeyWallet({
+          name: `AgentDesk ${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+          rpId: relyingPartyId(),
+        });
+  persistAltanaWallet(wallet);
   return wallet;
 }
 

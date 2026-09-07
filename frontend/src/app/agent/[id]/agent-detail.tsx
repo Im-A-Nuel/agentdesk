@@ -533,7 +533,7 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                   {hireError.includes("no keys registered in KeyStore") && (
                     <>
                       <p className="mt-2 leading-relaxed">
-                        This wallet was created but was not initialized onchain. Start fresh, use a new passkey, open the tBNB faucet in its new tab, then return to this tab without refreshing to claim test $U.
+                        This passkey was created before its first onchain action and cannot be recovered yet. Start fresh with a new passkey, fund it with tBNB, then claim test $U to initialize it. New wallets now retain the public passkey reference needed to resume this step safely.
                       </p>
                       <Button variant="outline" size="sm" className="mt-3" onClick={startWithNewWallet}>
                         Use a new passkey wallet
