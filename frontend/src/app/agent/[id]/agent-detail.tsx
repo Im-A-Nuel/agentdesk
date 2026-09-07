@@ -84,6 +84,17 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
   const hasHireBudget = balances?.paymentTokenRaw
     ? BigInt(balances.paymentTokenRaw) >= 100_000_000_000_000_000n
     : false;
+  const walletReadyToHire = hasGas && hasHireBudget;
+
+  const onchainErrorMessage = (error: unknown, action: "claim" | "hire") => {
+    const message = error instanceof Error ? error.message : `Could not ${action}`;
+    if (message.includes("An error occurred while executing calls") || message.includes("Reason: 0x")) {
+      return action === "claim"
+        ? "Claim could not be sent. Fund this exact wallet with BSC testnet tBNB, then try again."
+        : "Hire is not ready. Fund this exact wallet with tBNB, then claim at least 0.1 test $U before hiring.";
+    }
+    return message;
+  };
 
   const refreshBalances = async (wallet: AltanaWallet) => {
     const next = await readAltanaBalances(wallet);
@@ -117,7 +128,7 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
       await refreshBalances(altanaWallet);
       toast.success("10 test $U received");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not claim test $U";
+      const message = onchainErrorMessage(err, "claim");
       setHireError(message);
       toast.error(message);
     } finally {
@@ -162,7 +173,7 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
       setHireError(
         savedPending
           ? "The onchain hire is confirmed, but its dashboard record was not saved. Retry without signing another transaction."
-          : err instanceof Error ? err.message : "Hire failed",
+          : onchainErrorMessage(err, "hire"),
       );
       toast.error("Hire failed");
     } finally {
@@ -468,15 +479,17 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                         variant="steel"
                         size="sm"
                         aria-busy={claimingTokens}
-                        disabled={!altanaWallet || claimingTokens}
+                        disabled={!altanaWallet || !hasGas || claimingTokens}
                         onClick={claimTokens}
                       >
                         {claimingTokens && <Loader2 className="animate-spin" />}
-                        {claimingTokens ? "Claiming $U" : "Claim 10 test $U"}
+                        {claimingTokens ? "Claiming $U" : hasGas ? "Claim 10 test $U" : "Fund tBNB to claim"}
                       </Button>
                     </div>
-                    {!altanaWallet && (
-                      <p className="mt-2 text-[11px] text-muted-foreground">Unlock the passkey wallet before claiming tokens.</p>
+                    {(!altanaWallet || !hasGas) && (
+                      <p className="mt-2 text-[11px] text-muted-foreground">
+                        {!altanaWallet ? "Unlock the passkey wallet before claiming tokens." : "Send tBNB to this exact address, then refresh the balance before claiming tokens."}
+                      </p>
                     )}
                   </>
                 ) : (
@@ -491,7 +504,7 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                 size="lg"
                 className="w-full"
                 aria-busy={hiring || preparingWallet}
-                disabled={hiring || preparingWallet || granted || Boolean(orphanSession)}
+                disabled={hiring || preparingWallet || granted || Boolean(orphanSession) || (Boolean(altanaWallet) && !walletReadyToHire)}
                 onClick={handleHire}
               >
                 {hiring ? (
@@ -513,6 +526,16 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                   <>
                     <KeyRound />
                     Unlock passkey to hire
+                  </>
+                ) : altanaWallet && !hasGas ? (
+                  <>
+                    <KeyRound />
+                    Fund tBNB to continue
+                  </>
+                ) : altanaWallet && !hasHireBudget ? (
+                  <>
+                    <KeyRound />
+                    Claim test $U to continue
                   </>
                 ) : altanaAddress ? (
                   <>
