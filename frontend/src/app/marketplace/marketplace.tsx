@@ -42,6 +42,11 @@ export function Marketplace({ initialAgents }: { initialAgents: Agent[] }) {
                   Identity and reputation fields are synchronized from 8004scan. The permission
                   policy is shown before you sign anything.
                 </p>
+                {initialAgents[0]?.sourceSyncedAt && (
+                  <p className="num mt-3 text-[11px] text-muted-foreground">
+                    Registry cache updated {initialAgents[0].sourceSyncedAt.slice(0, 10)} UTC
+                  </p>
+                )}
               </div>
               <div className="relative w-full lg:w-72">
                 <Search className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

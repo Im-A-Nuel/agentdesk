@@ -27,7 +27,10 @@ import {
   grantSessionAndHire,
   openAltanaWallet,
   readAltanaBalances,
+  revokeOrphanSession,
   storedAltanaWalletAddress,
+  storedOrphanSession,
+  type OnchainHireResult,
   type AltanaBalances,
   type AltanaWallet,
 } from "@/lib/altana-client";
@@ -36,6 +39,12 @@ import { createHire, type HireResult } from "@/lib/api";
 const EXPLORER = "https://testnet.bscscan.com";
 
 const durations = [7, 14, 30, 90];
+type PendingHire = OnchainHireResult & {
+  agentId: string;
+  spendCap: number;
+  durationSeconds: number;
+  userWallet: string;
+};
 
 export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[] }) {
   const [cap, setCap] = useState(2500);
@@ -49,15 +58,31 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
   const [balances, setBalances] = useState<AltanaBalances | null>(null);
   const [preparingWallet, setPreparingWallet] = useState(false);
   const [claimingTokens, setClaimingTokens] = useState(false);
+  const [pendingHire, setPendingHire] = useState<PendingHire | null>(null);
+  const [orphanSession, setOrphanSession] = useState<`0x${string}` | null>(null);
+  const [cleaningSession, setCleaningSession] = useState(false);
 
   useEffect(() => {
     setAltanaAddress(storedAltanaWalletAddress());
-  }, []);
+    setOrphanSession(storedOrphanSession());
+    const saved = window.localStorage.getItem(`agentdesk:pending-hire:${agent.id}`);
+    if (saved) {
+      try {
+        setPendingHire(JSON.parse(saved) as PendingHire);
+      } catch {
+        window.localStorage.removeItem(`agentdesk:pending-hire:${agent.id}`);
+      }
+    }
+  }, [agent.id]);
 
   const expiry = useMemo(() => {
     const d = new Date(Date.now() + days * 86_400_000);
     return d.toISOString().slice(0, 10);
   }, [days]);
+  const hasGas = balances ? BigInt(balances.nativeWei) > 0n : false;
+  const hasHireBudget = balances?.paymentTokenRaw
+    ? BigInt(balances.paymentTokenRaw) >= 100_000_000_000_000_000n
+    : false;
 
   const refreshBalances = async (wallet: AltanaWallet) => {
     const next = await readAltanaBalances(wallet);
@@ -100,34 +125,53 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
   };
 
   const handleHire = async () => {
-    if (!altanaWallet) {
+    if (!altanaWallet && !pendingHire) {
       await prepareWallet();
       return;
     }
     setHiring(true);
     setHireError(null);
     try {
-      const onchain = await grantSessionAndHire({
-        wallet: altanaWallet,
-        agent,
-        spendCap: cap,
-        durationSeconds: days * 86_400,
-      });
-      const { hire } = await createHire({
-        agentId: agent.id,
-        spendCap: cap,
-        durationSeconds: days * 86_400,
-        userWallet: onchain.altanaWalletAddress,
-        ...onchain,
-      });
+      let evidence = pendingHire;
+      if (!evidence) {
+        if (!altanaWallet) throw new Error("Open the Altana wallet before hiring");
+        const onchain = await grantSessionAndHire({ wallet: altanaWallet, agent, spendCap: cap, durationSeconds: days * 86_400 });
+        evidence = { agentId: agent.id, spendCap: cap, durationSeconds: days * 86_400, userWallet: onchain.altanaWalletAddress, ...onchain };
+        window.localStorage.setItem(`agentdesk:pending-hire:${agent.id}`, JSON.stringify(evidence));
+        setPendingHire(evidence);
+      }
+      const { hire } = await createHire(evidence);
       setHireResult(hire);
       setGranted(true);
+      setPendingHire(null);
+      window.localStorage.removeItem(`agentdesk:pending-hire:${agent.id}`);
       toast.success("Session registered onchain");
     } catch (err) {
-      setHireError(err instanceof Error ? err.message : "Hire failed");
+      const savedPending = window.localStorage.getItem(`agentdesk:pending-hire:${agent.id}`);
+      setOrphanSession(storedOrphanSession());
+      setHireError(
+        savedPending
+          ? "The onchain hire is confirmed, but its dashboard record was not saved. Retry without signing another transaction."
+          : err instanceof Error ? err.message : "Hire failed",
+      );
       toast.error("Hire failed");
     } finally {
       setHiring(false);
+    }
+  };
+
+  const cleanOrphanSession = async () => {
+    setCleaningSession(true);
+    try {
+      const wallet = altanaWallet ?? await openAltanaWallet();
+      setAltanaWallet(wallet);
+      await revokeOrphanSession(wallet, orphanSession!);
+      setOrphanSession(null);
+      toast.success("Leftover session revoked onchain");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not revoke the leftover session");
+    } finally {
+      setCleaningSession(false);
     }
   };
 
@@ -212,8 +256,8 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                 </h2>
               </div>
               <p className="mt-3 text-sm text-muted-foreground">
-                This is the complete allowlist your session key will authorise. Calls to any other
-                contract are rejected before they reach the chain.
+                This is the complete allowlist encoded for the session. If that signer is handed to
+                an agent through a secure channel, calls outside this policy fail validation.
               </p>
               <ul className="mt-5 divide-y divide-border">
                 {agent.allowlist.map((c) => (
@@ -281,13 +325,35 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
             </header>
 
             <div className="space-y-7 px-6 py-6">
+              {orphanSession && (
+                <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4">
+                  <p className="text-sm font-semibold text-destructive">Session cleanup required</p>
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                    A previous job failed after its session was granted. Revoke that leftover key before starting another hire.
+                  </p>
+                  <p className="num mt-3 flex items-start gap-2 break-all text-[10px] text-muted-foreground">
+                    {orphanSession}<CopyButton value={orphanSession} label="Copy leftover session key" />
+                  </p>
+                  <Button variant="destructive" size="sm" className="mt-4" disabled={cleaningSession} onClick={cleanOrphanSession}>
+                    {cleaningSession ? <Loader2 className="animate-spin" /> : <Lock />}
+                    {cleaningSession ? "Revoking" : "Revoke leftover session"}
+                  </Button>
+                </div>
+              )}
+
+              {pendingHire && !granted && (
+                <div className="rounded-lg border border-warn/40 bg-warn/10 p-4 text-xs leading-relaxed text-muted-foreground">
+                  The onchain job is already confirmed. Retry below to save it to the dashboard. No new transaction will be signed.
+                </div>
+              )}
+
               <div>
                 <div className="flex items-end justify-between">
                   <label className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Coins className="h-3.5 w-3.5 text-brass" />
-                    Spend cap
+                    Daily spend limit
                   </label>
-                  <span className="num text-xl">${cap.toLocaleString("en-US")}</span>
+                  <span className="num text-xl">{cap.toLocaleString("en-US")} test $U</span>
                 </div>
                 <Slider
                   className="mt-4"
@@ -295,6 +361,7 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                   min={100}
                   max={25_000}
                   step={100}
+                  disabled={Boolean(pendingHire)}
                   onValueChange={(v) => {
                     setCap(v[0] ?? cap);
                     setGranted(false);
@@ -303,8 +370,8 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                   }}
                 />
                 <p className="num mt-2 flex justify-between text-[10px] text-muted-foreground">
-                  <span>$100</span>
-                  <span>$25,000 max, no unlimited option</span>
+                  <span>100 test $U</span>
+                  <span>25,000 test $U daily maximum</span>
                 </p>
               </div>
 
@@ -323,11 +390,12 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                         setHireResult(null);
                         setHireError(null);
                       }}
-                      className={`num cursor-pointer rounded-md border py-2 text-xs transition-all duration-300 ease-instrument ${
+                      className={`num cursor-pointer rounded-md border py-2 text-xs transition-all duration-300 ease-instrument disabled:cursor-not-allowed disabled:opacity-50 ${
                         days === d
                           ? "border-brass/50 bg-brass/12 text-brass"
                           : "border-border bg-panel text-muted-foreground hover:border-border-strong hover:text-foreground"
                       }`}
+                      disabled={Boolean(pendingHire)}
                     >
                       {d}d
                     </button>
@@ -341,12 +409,19 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                   Permission summary
                 </p>
                 <dl className="num mt-3 space-y-2 text-xs">
-                  <Row k="Cap" v={`$${cap.toLocaleString("en-US")}`} />
+                  <Row k="Daily limit" v={`${cap.toLocaleString("en-US")} test $U`} />
                   <Row k="Expiry" v={expiry} />
                   <Row k="Allowlist" v={`${agent.allowlist.length} contracts`} />
                   <Row k="Escrow" v="0.1 test $U" />
                   <Row k="Revoke" v="anytime, onchain" />
                 </dl>
+              </div>
+
+              <div className="border-l-2 border-warn bg-warn/10 p-4 text-xs leading-relaxed text-muted-foreground">
+                <span className="font-semibold text-foreground">Prototype boundary:</span> the
+                ERC-8183 job is funded onchain, but AgentDesk does not transmit the private session
+                signer to the listed provider. Autonomous execution and settlement are not part of
+                this demo.
               </div>
 
               <div className="rounded-lg border border-border p-4">
@@ -358,9 +433,16 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                       <CopyButton value={altanaAddress} label="Copy Altana wallet address" />
                     </p>
                     {balances && (
-                      <p className="num mt-2 text-[11px] text-muted-foreground">
-                        {Number(balances.native).toFixed(4)} tBNB, {balances.paymentToken} test $U
-                      </p>
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
+                        <p className={`rounded-md border px-2.5 py-2 ${hasGas ? "border-live/30 text-live" : "border-warn/40 text-warn"}`}>
+                          <span className="block font-semibold">Gas {hasGas ? "ready" : "needed"}</span>
+                          <span className="num">{Number(balances.native).toFixed(4)} tBNB</span>
+                        </p>
+                        <p className={`rounded-md border px-2.5 py-2 ${hasHireBudget ? "border-live/30 text-live" : "border-warn/40 text-warn"}`}>
+                          <span className="block font-semibold">Job budget {hasHireBudget ? "ready" : "needed"}</span>
+                          <span className="num">{balances.paymentToken} test $U</span>
+                        </p>
+                      </div>
                     )}
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                       <Button variant="steel" size="sm" asChild>
@@ -379,6 +461,9 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                         {claimingTokens ? "Claiming $U" : "Claim 10 test $U"}
                       </Button>
                     </div>
+                    {!altanaWallet && (
+                      <p className="mt-2 text-[11px] text-muted-foreground">Unlock the passkey wallet before claiming tokens.</p>
+                    )}
                   </>
                 ) : (
                   <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
@@ -391,7 +476,7 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                 variant={granted ? "outline" : "brass"}
                 size="lg"
                 className="w-full"
-                disabled={hiring || preparingWallet || granted}
+                disabled={hiring || preparingWallet || granted || Boolean(orphanSession)}
                 onClick={handleHire}
               >
                 {hiring ? (
@@ -403,6 +488,16 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                   <>
                     <Lock className="text-live" />
                     Session locked
+                  </>
+                ) : pendingHire ? (
+                  <>
+                    <KeyRound />
+                    Retry saving confirmed hire
+                  </>
+                ) : altanaAddress && !altanaWallet ? (
+                  <>
+                    <KeyRound />
+                    Unlock passkey to hire
                   </>
                 ) : altanaAddress ? (
                   <>

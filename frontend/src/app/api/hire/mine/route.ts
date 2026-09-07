@@ -15,23 +15,35 @@ function humanDuration(ms: number): string {
 export async function GET(req: NextRequest) {
   try {
     const wallet = req.nextUrl.searchParams.get("wallet");
+    if (!wallet || !/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+      return NextResponse.json(
+        { error: { code: "INVALID_WALLET", message: "A valid Altana wallet address is required" } },
+        { status: 400 },
+      );
+    }
 
     const records = await listHires(wallet);
     const hires = await Promise.all(records.map(async (h) => {
       const now = Date.now();
       const expired = new Date(h.expiryAt).getTime() <= now;
-      const valid =
-        h.altanaWalletAddress && h.sessionPublicKey
-          ? await isSessionValid({
-              walletAddress: h.altanaWalletAddress as Address,
-              sessionPublicKey: h.sessionPublicKey as Hex,
-            })
-          : false;
+      let valid: boolean | null = null;
+      if (h.altanaWalletAddress && h.sessionPublicKey) {
+        try {
+          valid = await isSessionValid({
+            walletAddress: h.altanaWalletAddress as Address,
+            sessionPublicKey: h.sessionPublicKey as Hex,
+          });
+        } catch {
+          valid = null;
+        }
+      }
       const status: "active" | "revoked" | "expired" = expired
         ? "expired"
-        : !valid
+        : valid === false
           ? "revoked"
-          : "active";
+          : valid === true
+            ? "active"
+            : h.status;
       const agent = await getAgent(h.agentId);
       return {
         id: h.id,
@@ -46,6 +58,7 @@ export async function GET(req: NextRequest) {
         spendCap: h.spendCap,
         spent: h.spent,
         status,
+        verification: valid === null && !expired ? "unavailable" : "verified",
         createdAt: h.createdAt.slice(0, 10),
         expiresIn:
           status === "revoked"
@@ -55,7 +68,7 @@ export async function GET(req: NextRequest) {
       };
     }));
 
-    return NextResponse.json({ hires });
+    return NextResponse.json({ hires }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json(
       { error: { code: "INTERNAL", message: "Could not read the keystore. Please try again." } },

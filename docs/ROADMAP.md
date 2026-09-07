@@ -13,6 +13,7 @@
 
 ## Production hardening
 
+- Define an authenticated provider endpoint and encrypted session-signer handoff protocol.
 - Add wallet-signed API authentication and replay protection.
 - Index Keystore and ERC-8183 events instead of reading per dashboard row.
 - Add retry/backoff and observability for the registry cron.

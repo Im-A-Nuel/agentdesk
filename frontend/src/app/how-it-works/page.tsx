@@ -17,7 +17,7 @@ const txSteps = [
     tx: "TX 01",
     icon: FileCheck2,
     title: "Session granted",
-    body: "The SDK creates a session key and registers its spend cap, contract allowlist, and expiry in the Altana Keystore.",
+    body: "The SDK creates a session key and registers its daily spend limit, contract allowlist, and expiry in the Altana Keystore.",
   },
   {
     tx: "TX 02",
@@ -39,7 +39,7 @@ export default function HowItWorksPage() {
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
               Every hire on AgentDesk ends with a scoped session key registered in the Altana
-              Keystore. Nothing is approved until you set a cap, name the contracts, and pick an
+              Keystore. Nothing is approved until you set a daily limit, name the contracts, and pick an
               expiry.
             </p>
           </Reveal>

@@ -14,7 +14,7 @@
 3. Copy the wallet address.
 4. Use the linked BNB testnet faucet to send test BNB to that address.
 5. Return to the agent page and claim test $U.
-6. Select a spend cap and duration, then start the hire.
+6. Select a daily spend limit and duration, then start the hire.
 7. Approve the session registration and funded job transactions.
 8. Open the Keystore and ERC-8183 hashes in BscScan.
 9. Open **Dashboard**, choose the active session, and revoke it.

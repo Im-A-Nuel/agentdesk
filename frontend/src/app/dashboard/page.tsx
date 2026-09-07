@@ -130,8 +130,8 @@ export default function Dashboard() {
                 </p>
                 <h1 className="mt-4 text-4xl font-semibold sm:text-5xl">Granted authority</h1>
                 <p className="mt-4 max-w-xl text-muted-foreground">
-                  Every row is read live from the Altana Keystore at render time. Cached status is
-                  used for filtering only, never for what you see here.
+                  Each row checks the Altana Keystore when loaded. If the RPC is unavailable, the
+                  row is marked clearly instead of presenting cached state as verified.
                 </p>
                 {isConnected && address && (
                   <p className="num mt-3 text-xs text-muted-foreground">
@@ -158,7 +158,7 @@ export default function Dashboard() {
                   accent
                 />
                 <Summary
-                  label="Combined spend cap"
+                  label="Combined daily limits"
                   value={totalCap}
                   format={(n) => `$${n.toLocaleString("en-US")}`}
                 />
@@ -196,7 +196,7 @@ export default function Dashboard() {
             <p className="mt-4 text-base font-semibold text-foreground">No sessions yet</p>
             <p className="mt-2 max-w-md mx-auto text-sm text-muted-foreground">
               You have not hired an agent. Browsing costs nothing, and no wallet approval happens
-              until you set a cap and an expiry.
+              until you set a daily limit and an expiry.
             </p>
             <Button variant="brass" size="lg" className="mt-6" asChild>
               <Link href="/marketplace">Browse the marketplace</Link>
@@ -240,6 +240,9 @@ export default function Dashboard() {
                       {isActive && <span className="h-1.5 w-1.5 rounded-full bg-live" />}
                       {h.status}
                     </Badge>
+                    {h.verification === "unavailable" && (
+                      <Badge variant="warn">Keystore unavailable</Badge>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     {agent && (
@@ -269,7 +272,7 @@ export default function Dashboard() {
                 <div className="grid gap-6 px-6 py-6 lg:grid-cols-[1.2fr_1fr]">
                   <div>
                     <dl className="grid gap-3 text-xs sm:grid-cols-2">
-                      <Field k="Spend cap" v={`${h.spendCap.toLocaleString("en-US")} test $U`} />
+                      <Field k="Daily limit" v={`${h.spendCap.toLocaleString("en-US")} test $U`} />
                       <Field k="State" v={isActive ? `expires in ${h.expiresIn}` : "permission ended"} />
                       <Field k="Session key" v={shortAddress(h.sessionKeyAddress)} />
                       <Field k="Granted" v={h.createdAt} />

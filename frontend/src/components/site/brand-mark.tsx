@@ -6,9 +6,9 @@ export function BrandMark({ className }: { className?: string }) {
     <svg viewBox="0 0 512 512" className={className} aria-hidden="true">
       <defs>
         <linearGradient id="brand-brass" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#86a7ea" />
-          <stop offset="45%" stopColor="#7c3aed" />
-          <stop offset="100%" stopColor="#e17cb7" />
+          <stop offset="0%" stopColor="#7d4300" />
+          <stop offset="52%" stopColor="#ad6807" />
+          <stop offset="100%" stopColor="#d29a4c" />
         </linearGradient>
       </defs>
       <rect width="512" height="512" rx="120" fill="url(#brand-brass)" />

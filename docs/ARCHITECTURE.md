@@ -23,11 +23,15 @@ The browser performs every signing operation. The server never receives a privat
 ## Hire sequence
 
 1. The browser creates or recovers an Altana passkey smart wallet.
-2. `grantSession` generates a session key and registers its cap, allowlist, and expiry.
+2. `grantSession` generates a session key and registers its daily limit, allowlist, and expiry.
 3. `hireErc8183Agent` creates and funds a 0.1 test $U job.
 4. The browser submits both proofs and the session public key to `POST /api/hire`.
 5. The server checks address formats, receipt success, Keystore validity, job client/provider, and FUNDED state.
 6. Only verified evidence is persisted.
+
+The SDK session object includes a private signer. AgentDesk intentionally does not serialize,
+publish, or send that signer to an unverified registry endpoint. A production execution handoff
+requires an authenticated provider endpoint and encrypted credential delivery.
 
 ## Revoke sequence
 
@@ -39,3 +43,5 @@ The browser performs every signing operation. The server never receives a privat
 ## Deployment
 
 Deploy `frontend` as the Vercel project root. Configure `DATABASE_URL`, `CRON_SECRET`, and optionally `AGENTSCAN_API_KEY`, `BSC_TESTNET_RPC_URL`, and `NEXT_PUBLIC_SITE_URL`. `vercel.json` triggers the protected registry sync route daily at 01:00 UTC.
+
+`GET /api/health` reports database and BSC testnet RPC availability without exposing credentials.

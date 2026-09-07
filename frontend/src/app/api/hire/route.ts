@@ -4,12 +4,27 @@ import { keccak256, parseUnits, type Address, type Hex } from "viem";
 
 import { getAgent } from "@/lib/agents-repo";
 import { isSessionValid, isSuccessfulTransaction } from "@/lib/altana";
-import { createHire as saveHire } from "@/lib/hire-store";
+import { createHire as saveHire, getHireByJobId, type HireRecord } from "@/lib/hire-store";
 
-const MAX_SPEND_CAP = 1_000_000;
+const MIN_DAILY_LIMIT = 100;
+const MAX_DAILY_LIMIT = 25_000;
+const MIN_DURATION_SECONDS = 7 * 86_400;
+const MAX_DURATION_SECONDS = 90 * 86_400;
 
 function error(status: number, code: string, message: string) {
   return NextResponse.json({ error: { code, message } }, { status });
+}
+
+function matchesProof(hire: HireRecord, input: {
+  agentId: string;
+  wallet: string;
+  sessionPublicKey: string;
+  transactionHash: string;
+}) {
+  return hire.agentId === input.agentId &&
+    hire.altanaWalletAddress?.toLowerCase() === input.wallet.toLowerCase() &&
+    hire.sessionPublicKey?.toLowerCase() === input.sessionPublicKey.toLowerCase() &&
+    hire.erc8183TxHash.toLowerCase() === input.transactionHash.toLowerCase();
 }
 
 export async function POST(req: NextRequest) {
@@ -56,7 +71,7 @@ export async function POST(req: NextRequest) {
   if (userWallet.toLowerCase() !== altanaWalletAddress.toLowerCase()) {
     return error(400, "WALLET_MISMATCH", "Dashboard wallet must match the Altana wallet");
   }
-  if (!sessionPublicKey || !/^0x[a-fA-F0-9]+$/.test(sessionPublicKey)) {
+  if (!sessionPublicKey || !/^0x(?:[a-fA-F0-9]{2})+$/.test(sessionPublicKey)) {
     return error(400, "INVALID_SESSION_KEY", "A valid session public key is required");
   }
   if (!erc8183TxHash || !/^0x[a-fA-F0-9]{64}$/.test(erc8183TxHash)) {
@@ -68,14 +83,11 @@ export async function POST(req: NextRequest) {
   if (!erc8183JobId || !/^\d+$/.test(erc8183JobId)) {
     return error(400, "INVALID_JOB", "A valid ERC-8183 job id is required");
   }
-  if (!Number.isFinite(spendCap) || spendCap <= 0) {
-    return error(400, "INVALID_CAP", "Spend cap must be greater than zero");
+  if (!Number.isFinite(spendCap) || spendCap < MIN_DAILY_LIMIT || spendCap > MAX_DAILY_LIMIT) {
+    return error(400, "INVALID_CAP", `Daily spend limit must be between ${MIN_DAILY_LIMIT} and ${MAX_DAILY_LIMIT.toLocaleString("en-US")} test $U`);
   }
-  if (!Number.isFinite(spendCap) || spendCap > MAX_SPEND_CAP) {
-    return error(400, "CAP_TOO_LARGE", `Spend cap cannot exceed $${MAX_SPEND_CAP.toLocaleString("en-US")}`);
-  }
-  if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
-    return error(400, "INVALID_DURATION", "Duration must be greater than zero");
+  if (!Number.isFinite(durationSeconds) || durationSeconds < MIN_DURATION_SECONDS || durationSeconds > MAX_DURATION_SECONDS) {
+    return error(400, "INVALID_DURATION", "Duration must be between 7 and 90 days");
   }
 
   try {
@@ -109,6 +121,20 @@ export async function POST(req: NextRequest) {
       return error(422, "JOB_MISMATCH", "ERC-8183 job does not match this hire");
     }
 
+    const proof = {
+      agentId: agent.id,
+      wallet: altanaWalletAddress,
+      sessionPublicKey,
+      transactionHash: erc8183TxHash,
+    };
+    const existing = await getHireByJobId(erc8183JobId);
+    if (existing) {
+      if (!matchesProof(existing, proof)) {
+        return error(409, "JOB_ALREADY_RECORDED", "This ERC-8183 job is already linked to another hire");
+      }
+      return NextResponse.json({ hire: existing });
+    }
+
     const hire = await saveHire({
       userWallet,
       altanaWalletAddress,
@@ -124,6 +150,10 @@ export async function POST(req: NextRequest) {
       expiryAt: expiresAt.toISOString(),
       status: "active",
     });
+
+    if (!matchesProof(hire, proof)) {
+      return error(409, "JOB_ALREADY_RECORDED", "This ERC-8183 job is already linked to another hire");
+    }
 
     return NextResponse.json({ hire }, { status: 201 });
   } catch {

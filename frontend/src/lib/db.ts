@@ -1,6 +1,5 @@
 // Neon Postgres client (serverless HTTP driver).
-// The app degrades gracefully: when DATABASE_URL is not set, callers use seed data
-// via the in-memory fallback instead. This file is the only place the DB is touched.
+// Without DATABASE_URL, reads return empty collections and writes use an in-memory store.
 
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 

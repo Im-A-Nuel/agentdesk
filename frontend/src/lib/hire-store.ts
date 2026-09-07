@@ -83,6 +83,14 @@ export async function getHire(id: string): Promise<HireRecord | undefined> {
   return rows[0] ? rowToRecord(rows[0]) : undefined;
 }
 
+export async function getHireByJobId(jobId: string): Promise<HireRecord | undefined> {
+  if (!isDbConfigured()) {
+    return [...memory.values()].find((record) => record.erc8183JobId === jobId);
+  }
+  const rows = await query<HireRow>("SELECT * FROM hires WHERE erc8183_job_id = $1", [jobId]);
+  return rows[0] ? rowToRecord(rows[0]) : undefined;
+}
+
 export async function createHire(
   input: Omit<HireRecord, "id" | "createdAt">,
 ): Promise<HireRecord> {
@@ -101,6 +109,7 @@ export async function createHire(
        keystore_tx_hash, erc8183_tx_hash, erc8183_job_id, revoke_tx_hash, spend_cap, spent,
        expiry_at, status, created_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+     ON CONFLICT (erc8183_job_id) WHERE erc8183_job_id IS NOT NULL DO NOTHING
      RETURNING *`,
     [
       record.id,
@@ -120,7 +129,10 @@ export async function createHire(
       record.createdAt,
     ],
   );
-  return rowToRecord(rows[0]!);
+  if (rows[0]) return rowToRecord(rows[0]);
+  const existing = record.erc8183JobId ? await getHireByJobId(record.erc8183JobId) : undefined;
+  if (!existing) throw new Error("Hire could not be persisted");
+  return existing;
 }
 
 export async function updateHire(

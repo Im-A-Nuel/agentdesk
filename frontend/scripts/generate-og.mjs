@@ -9,14 +9,14 @@ const svg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
     <linearGradient id="brass" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#86a7ea"/>
-      <stop offset="45%" stop-color="#7c3aed"/>
-      <stop offset="100%" stop-color="#e17cb7"/>
+      <stop offset="0%" stop-color="#7d4300"/>
+      <stop offset="52%" stop-color="#ad6807"/>
+      <stop offset="100%" stop-color="#d29a4c"/>
     </linearGradient>
     <linearGradient id="soft" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#86a7ea" stop-opacity="0.22"/>
-      <stop offset="55%" stop-color="#7c3aed" stop-opacity="0.16"/>
-      <stop offset="100%" stop-color="#e17cb7" stop-opacity="0.22"/>
+      <stop offset="0%" stop-color="#d29a4c" stop-opacity="0.22"/>
+      <stop offset="55%" stop-color="#ad6807" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#efe0c5" stop-opacity="0.28"/>
     </linearGradient>
   </defs>
   <rect width="1200" height="630" fill="#ffffff"/>
@@ -33,8 +33,8 @@ const svg = `
   </g>
   <text x="280" y="255" font-family="Arial, sans-serif" font-size="64" font-weight="800" fill="#16161c">AgentDesk</text>
   <text x="280" y="330" font-family="Arial, sans-serif" font-size="32" font-weight="600" fill="#6a6a74">Hire onchain AI agents on BNB Smart Chain</text>
-  <text x="280" y="385" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#7c3aed">Scoped. Capped. Revocable.</text>
-  <text x="280" y="470" font-family="ui-monospace, Menlo, monospace" font-size="18" fill="#9a9aa4">ERC-8004 registry · Altana Keystore · ERC-8183 hire · BSC testnet</text>
+  <text x="280" y="385" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#9a5900">Scoped. Limited. Revocable.</text>
+  <text x="280" y="470" font-family="ui-monospace, Menlo, monospace" font-size="18" fill="#797980">ERC-8004 registry / Altana Keystore / ERC-8183 hire / BSC testnet</text>
 </svg>`;
 
 const png = await sharp(Buffer.from(svg)).resize(1200, 630).png().toBuffer();

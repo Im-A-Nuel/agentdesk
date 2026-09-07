@@ -54,6 +54,7 @@ function rowToAgent(row: AgentRow): Agent {
     capabilities: asArray(row.capabilities) as string[],
     activity: asArray(row.activity) as { label: string; value: string }[],
     registeredAt: new Date(row.registered_at).toISOString().slice(0, 10),
+    sourceSyncedAt: new Date(row.source_synced_at).toISOString(),
   };
 }
 

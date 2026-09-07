@@ -69,14 +69,15 @@ function ConnectWalletButton() {
 
   return (
     <Button
+      aria-label={opening ? "Opening Altana wallet" : address ? `Open Altana wallet ${shortAddress(address)}` : "Open Altana wallet"}
       variant={address ? "outline" : "brass"}
       size="sm"
-      className={address ? "num" : ""}
+      className={`h-11 px-3 sm:px-4 ${address ? "num" : ""}`}
       disabled={opening}
       onClick={openWallet}
     >
       {opening ? <Loader2 className="animate-spin" /> : <KeyRound />}
-      {opening ? "Opening" : address ? shortAddress(address) : "Altana wallet"}
+      <span className="hidden sm:inline">{opening ? "Opening" : address ? shortAddress(address) : "Altana wallet"}</span>
     </Button>
   );
 }
@@ -92,6 +93,8 @@ export function SiteHeader() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => setMenuOpen(false), [pathname]);
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -112,6 +115,7 @@ export function SiteHeader() {
               <Link
                 key={n.href}
                 href={n.href}
+                aria-current={pathname === n.href ? "page" : undefined}
                 className={cn(navLinkClass, pathname === n.href && "text-foreground")}
               >
                 {n.label}
@@ -187,7 +191,7 @@ export function SiteFooter() {
           title="Product"
           items={[
             { label: "Marketplace", href: "/marketplace" },
-            { label: "Agent detail", href: "/agent/helios-band" },
+            { label: "Agent directory", href: "/marketplace" },
             { label: "Permissions dashboard", href: "/dashboard" },
             { label: "Session keys", href: "/how-it-works" },
           ]}
@@ -212,7 +216,7 @@ export function SiteFooter() {
       </div>
       <div className="mx-auto flex max-w-[1240px] flex-col gap-2 border-t border-border px-5 py-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <span className="num">AgentDesk, built for BNB Chain Build the Era</span>
-        <span className="num">BSC testnet only · verify every hash on BscScan</span>
+        <span className="num">BSC testnet only / verify every hash on BscScan</span>
       </div>
     </footer>
   );
@@ -255,9 +259,12 @@ function FooterColumn({
 export function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
+      <a href="#main-content" className="sr-only z-[100] rounded-md bg-background px-4 py-3 text-sm font-semibold focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:ring-2 focus:ring-ring">
+        Skip to content
+      </a>
       <AnnouncementBar />
       <SiteHeader />
-      <main>{children}</main>
+      <main id="main-content">{children}</main>
       <SiteFooter />
     </div>
   );

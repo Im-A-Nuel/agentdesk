@@ -38,3 +38,11 @@ export async function isSuccessfulTransaction(hash: Hex, expectedAddress?: Addre
   const expected = expectedAddress.toLowerCase();
   return receipt.to?.toLowerCase() === expected || receipt.logs.some((log) => log.address.toLowerCase() === expected);
 }
+
+export async function isBscTestnetAvailable(): Promise<boolean> {
+  try {
+    return await publicClient.getChainId() === BNB_TESTNET.chainId;
+  } catch {
+    return false;
+  }
+}

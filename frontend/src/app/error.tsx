@@ -23,7 +23,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
           Try again
         </Button>
         <Button variant="steel" size="lg" asChild>
-          <a href="/">Go to marketplace</a>
+          <a href="/marketplace">Go to marketplace</a>
         </Button>
       </div>
     </div>

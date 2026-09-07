@@ -46,7 +46,7 @@ export const metadata: Metadata = {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "AgentDesk: hire onchain AI agents on BNB Smart Chain, scoped, capped and revocable",
+        alt: "AgentDesk: hire onchain AI agents on BNB Smart Chain with limited and revocable sessions",
       },
     ],
   },

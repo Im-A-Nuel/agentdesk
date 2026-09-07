@@ -14,7 +14,10 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
         { status: 404 },
       );
     }
-    return NextResponse.json({ agent });
+    return NextResponse.json(
+      { agent },
+      { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600" } },
+    );
   } catch {
     return NextResponse.json(
       { error: { code: "INTERNAL", message: "Could not load the agent. Please try again." } },

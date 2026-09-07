@@ -12,7 +12,7 @@ AgentDesk is a discovery-to-hire marketplace for ERC-8004 agents on BNB Smart Ch
 
 ## Stack
 
-- Next.js 15, React 19, TypeScript, Tailwind CSS 4
+- Next.js 16, React 19, TypeScript, Tailwind CSS 4
 - Altana SDK 0.7.1 and viem
 - ERC-8004 discovery through 8004scan
 - Neon serverless Postgres
@@ -43,11 +43,14 @@ npm run build
 2. Create or recover the Altana passkey wallet.
 3. Copy its address and fund it with test BNB.
 4. Claim test $U from the agent page.
-5. Choose a cap and duration, then grant and hire.
+5. Choose a daily limit and duration, then grant and fund the job.
 6. Open both hashes in BscScan.
 7. Open the dashboard and revoke the session onchain.
 
 The fixed demo job budget is 0.1 test $U. AgentDesk charges no platform fee.
+
+The current prototype does not deliver the private session signer to a provider process. It proves
+the permission lifecycle and funded ERC-8183 hire, not autonomous execution or settlement.
 
 ## Documentation
 

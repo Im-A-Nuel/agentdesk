@@ -5,6 +5,7 @@ export type Agent = {
   tagline: string; description: string; reputation: number; jobs: number; volumeUsd: number;
   successRate: number; feeBps: number; medianRuntime: string; allowlist: AllowlistEntry[];
   capabilities: string[]; activity: { label: string; value: string }[]; registeredAt: string;
+  sourceSyncedAt?: string;
 };
 export const categories: { id: CategoryId; label: string; blurb: string }[] = [
   { id: "rebalancing", label: "Rebalancing", blurb: "Agents discovered with the rebalancing semantic query." },
