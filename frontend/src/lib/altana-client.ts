@@ -16,6 +16,7 @@ const walletStorageKey = "agentdesk:altana-wallet";
 const orphanSessionStorageKey = "agentdesk:orphan-session";
 const hireBudget = parseUnits("0.1", 18);
 const nativeFeeAllowance = parseEther("0.02");
+const walletChangeEvent = "agentdesk:wallet-change";
 
 export type AltanaWallet = Awaited<ReturnType<typeof altana.createPasskeyWallet>>;
 
@@ -53,6 +54,7 @@ export function storedAltanaWalletAddress(): Address | null {
 
 export function clearStoredAltanaWallet() {
   window.localStorage.removeItem(walletStorageKey);
+  window.dispatchEvent(new Event(walletChangeEvent));
 }
 
 export async function openAltanaWallet(): Promise<AltanaWallet> {
@@ -64,6 +66,7 @@ export async function openAltanaWallet(): Promise<AltanaWallet> {
         rpId: relyingPartyId(),
       });
   window.localStorage.setItem(walletStorageKey, wallet.address);
+  window.dispatchEvent(new Event(walletChangeEvent));
   return wallet;
 }
 

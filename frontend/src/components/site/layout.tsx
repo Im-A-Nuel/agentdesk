@@ -51,7 +51,14 @@ function ConnectWalletButton() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    setAddress(storedAltanaWalletAddress());
+    const syncAddress = () => setAddress(storedAltanaWalletAddress());
+    syncAddress();
+    window.addEventListener("agentdesk:wallet-change", syncAddress);
+    window.addEventListener("focus", syncAddress);
+    return () => {
+      window.removeEventListener("agentdesk:wallet-change", syncAddress);
+      window.removeEventListener("focus", syncAddress);
+    };
   }, []);
 
   const openWallet = async () => {
