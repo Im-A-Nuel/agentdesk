@@ -273,7 +273,7 @@ export default function Dashboard() {
                 </header>
 
                 <div className="grid gap-6 px-6 py-6 lg:grid-cols-[1.2fr_1fr]">
-                  <div>
+                  <div className="space-y-5">
                     <dl className="grid gap-3 text-xs sm:grid-cols-2">
                       <Field k="Daily limit" v={`${h.spendCap.toLocaleString("en-US")} test $U`} />
                       <Field k="State" v={isActive ? `expires in ${h.expiresIn}` : "permission ended"} />
@@ -282,6 +282,7 @@ export default function Dashboard() {
                       <Field k="Allowlist" v={`${agent?.allowlist.length ?? 0} contracts`} />
                       <Field k="ERC-8183 job" v={h.erc8183JobId ?? "confirmed"} />
                     </dl>
+                    <TransactionTimeline status={h.status} />
                   </div>
 
                   <div className="panel-inset p-4">
@@ -297,6 +298,20 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
+                {h.status === "revoked" && h.revokeTxHash && (
+                  <div className="mx-6 mb-6 flex flex-col gap-3 rounded-lg border border-live/30 bg-live/8 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-3">
+                      <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-live/15 text-live">
+                        <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Session revoked onchain</p>
+                        <p className="mt-1 text-xs leading-5 text-muted-foreground">This permission can no longer authorize calls from the agent.</p>
+                      </div>
+                    </div>
+                    <ProofLink label="Open revoke proof" hash={h.revokeTxHash} />
+                  </div>
+                )}
               </article>
             </Reveal>
           );
@@ -416,20 +431,64 @@ function Field({ k, v }: { k: string; v: string }) {
 
 function TxRow({ label, hash }: { label: string; hash: string }) {
   return (
-    <div>
-      <p className="text-[11px] text-muted-foreground">{label}</p>
-      <p className="num mt-1 flex items-start gap-2 text-[10px] break-all text-foreground/85">
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-[11px] text-muted-foreground">{label}</p>
+        <p className="num mt-1 text-xs text-foreground">{shortAddress(hash)}</p>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <CopyButton value={hash} label={`Copy ${label} hash`} />
         <a
           href={`${EXPLORER}/tx/${hash}`}
           target="_blank"
           rel="noreferrer"
-          className="transition-colors duration-300 hover:text-brass"
+          aria-label={`Open ${label} in BscScan`}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-brass focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          {hash}
+          <ArrowUpRight className="h-3.5 w-3.5" />
         </a>
-        <CopyButton value={hash} label={`Copy ${label} hash`} />
-        <ArrowUpRight className="mt-0.5 h-3 w-3 shrink-0 opacity-60" />
-      </p>
+      </div>
+    </div>
+  );
+}
+
+function ProofLink({ label, hash }: { label: string; hash: string }) {
+  return (
+    <Button variant="steel" size="sm" asChild>
+      <a href={`${EXPLORER}/tx/${hash}`} target="_blank" rel="noreferrer">
+        {label}
+        <ArrowUpRight />
+      </a>
+    </Button>
+  );
+}
+
+function TransactionTimeline({ status }: { status: HireWithLive["status"] }) {
+  const steps = [
+    { label: "Wallet funded", complete: true },
+    { label: "$U claimed", complete: true },
+    { label: "Session active", complete: status === "active" },
+    { label: "Job funded", complete: status !== "revoked" },
+  ];
+
+  if (status === "revoked") {
+    steps[2] = { label: "Session revoked", complete: true };
+    steps[3] = { label: "Job funded", complete: true };
+  }
+
+  return (
+    <div className="rounded-lg border border-border bg-panel px-3 py-3">
+      <p className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">Transaction path</p>
+      <ol className="mt-3 grid gap-2 sm:grid-cols-4">
+        {steps.map((step) => (
+          <li key={step.label} className="flex items-center gap-2 text-[11px] text-foreground/85">
+            <span className={`grid h-4 w-4 shrink-0 place-items-center rounded-full ${step.complete ? "bg-live/15 text-live" : "bg-muted text-muted-foreground"}`}>
+              {step.complete ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : <span className="h-1 w-1 rounded-full bg-current" />}
+            </span>
+            {step.label}
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }

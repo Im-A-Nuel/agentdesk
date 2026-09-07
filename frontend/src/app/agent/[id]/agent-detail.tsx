@@ -57,6 +57,7 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
   const [altanaWallet, setAltanaWallet] = useState<AltanaWallet | null>(null);
   const [altanaAddress, setAltanaAddress] = useState<string | null>(null);
   const [balances, setBalances] = useState<AltanaBalances | null>(null);
+  const [refreshingBalances, setRefreshingBalances] = useState(false);
   const [preparingWallet, setPreparingWallet] = useState(false);
   const [claimingTokens, setClaimingTokens] = useState(false);
   const [pendingHire, setPendingHire] = useState<PendingHire | null>(null);
@@ -105,6 +106,19 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
   const refreshBalances = async (wallet: AltanaWallet) => {
     const next = await readAltanaBalances(wallet);
     setBalances(next);
+  };
+
+  const refreshWalletBalances = async () => {
+    if (!altanaWallet) return;
+    setRefreshingBalances(true);
+    try {
+      await refreshBalances(altanaWallet);
+      toast.success("Wallet balance refreshed");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not refresh wallet balance");
+    } finally {
+      setRefreshingBalances(false);
+    }
   };
 
   const prepareWallet = async () => {
@@ -501,6 +515,16 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                       >
                         {claimingTokens && <Loader2 className="animate-spin" />}
                         {claimingTokens ? "Claiming $U" : hasGas ? "Claim 10 test $U" : "Fund tBNB to claim"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-busy={refreshingBalances}
+                        disabled={!altanaWallet || refreshingBalances}
+                        onClick={refreshWalletBalances}
+                      >
+                        {refreshingBalances && <Loader2 className="animate-spin" />}
+                        {refreshingBalances ? "Refreshing" : "Refresh balance"}
                       </Button>
                     </div>
                     {(!altanaWallet || !hasGas) && (

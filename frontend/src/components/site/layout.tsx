@@ -4,10 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { Check, ChevronRight, Copy, KeyRound, Loader2, Menu, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Copy, KeyRound, Loader2, LogOut, Menu, RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/site/brand-mark";
-import { openAltanaWallet, storedAltanaWalletAddress } from "@/lib/altana-client";
+import {
+  clearStoredAltanaWallet,
+  openAltanaWallet,
+  readAltanaBalances,
+  storedAltanaWalletAddress,
+  type AltanaBalances,
+} from "@/lib/altana-client";
 import { shortAddress } from "@/lib/agents";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +55,8 @@ function ConnectWalletButton() {
   const [address, setAddress] = useState<string | null>(null);
   const [opening, setOpening] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [balances, setBalances] = useState<AltanaBalances | null>(null);
 
   useEffect(() => {
     const syncAddress = () => setAddress(storedAltanaWalletAddress());
@@ -74,6 +82,19 @@ function ConnectWalletButton() {
     }
   };
 
+  const refreshBalances = async () => {
+    setOpening(true);
+    try {
+      const wallet = await openAltanaWallet();
+      setAddress(wallet.address);
+      setBalances(await readAltanaBalances(wallet));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not refresh wallet balance");
+    } finally {
+      setOpening(false);
+    }
+  };
+
   const copyWalletAddress = async () => {
     if (!address) return;
 
@@ -87,17 +108,76 @@ function ConnectWalletButton() {
     }
   };
 
+  const disconnect = () => {
+    clearStoredAltanaWallet();
+    setAddress(null);
+    setBalances(null);
+    setMenuOpen(false);
+    toast.success("Wallet disconnected from this browser");
+  };
+
+  if (address) {
+    return (
+      <div className="relative">
+        <Button
+          aria-expanded={menuOpen}
+          aria-haspopup="menu"
+          aria-label={`Open wallet menu for ${address}`}
+          variant="outline"
+          size="sm"
+          className="num h-11 px-3 sm:px-4"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <KeyRound />
+          <span className="hidden sm:inline">{shortAddress(address)}</span>
+          <ChevronDown className={`hidden h-3.5 w-3.5 transition-transform sm:block ${menuOpen ? "rotate-180" : ""}`} />
+        </Button>
+        {menuOpen && (
+          <div className="absolute right-0 z-50 mt-2 w-[min(19rem,calc(100vw-2.5rem))] rounded-xl border border-border-strong bg-card p-3 shadow-float" role="menu">
+            <p className="px-1 text-[10px] tracking-[0.16em] text-muted-foreground uppercase">Altana wallet</p>
+            <div className="mt-2 rounded-lg border border-border bg-panel p-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="num min-w-0 truncate text-xs text-foreground">{address}</p>
+                <button type="button" aria-label="Copy wallet address" className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-brass focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={copyWalletAddress}>
+                  {copied ? <Check className="h-3.5 w-3.5 text-live" /> : <Copy className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-md border border-border bg-card px-2.5 py-2">
+                  <p className="text-[10px] text-muted-foreground">Testnet gas</p>
+                  <p className="num mt-1 text-foreground">{balances ? `${Number(balances.native).toFixed(4)} tBNB` : "—"}</p>
+                </div>
+                <div className="rounded-md border border-border bg-card px-2.5 py-2">
+                  <p className="text-[10px] text-muted-foreground">Job token</p>
+                  <p className="num mt-1 text-foreground">{balances ? `${balances.paymentToken} $U` : "—"}</p>
+                </div>
+              </div>
+            </div>
+            <Button variant="steel" size="sm" className="mt-3 w-full" disabled={opening} onClick={refreshBalances}>
+              {opening ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+              {balances ? "Refresh balance" : "Unlock to view balance"}
+            </Button>
+            <Button variant="ghost" size="sm" className="mt-1 w-full justify-start text-muted-foreground hover:text-destructive" onClick={disconnect}>
+              <LogOut />
+              Disconnect this browser
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <Button
-      aria-label={opening ? "Opening Altana wallet" : address ? `Copy wallet address ${address}` : "Open Altana wallet"}
-      variant={address ? "outline" : "brass"}
+      aria-label={opening ? "Opening Altana wallet" : "Open Altana wallet"}
+      variant="brass"
       size="sm"
-      className={`h-11 px-3 sm:px-4 ${address ? "num" : ""}`}
+      className="h-11 px-3 sm:px-4"
       disabled={opening}
-      onClick={address ? copyWalletAddress : openWallet}
+      onClick={openWallet}
     >
-      {opening ? <Loader2 className="animate-spin" /> : address ? copied ? <Check className="text-live" /> : <Copy /> : <KeyRound />}
-      <span className="hidden sm:inline">{opening ? "Opening" : address ? shortAddress(address) : "Altana wallet"}</span>
+      {opening ? <Loader2 className="animate-spin" /> : <KeyRound />}
+      <span className="hidden sm:inline">{opening ? "Opening" : "Altana wallet"}</span>
     </Button>
   );
 }
