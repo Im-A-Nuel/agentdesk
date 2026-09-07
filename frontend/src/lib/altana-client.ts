@@ -199,7 +199,10 @@ export async function grantSessionAndHire(input: {
         { cause: cleanupError },
       );
     }
-    throw new Error("ERC-8183 hire failed. The newly granted session was revoked automatically.", { cause: hireError });
+    throw new Error(
+      `ERC-8183 hire failed: ${hireError instanceof Error ? hireError.message : "unknown relay error"}. The newly granted session was revoked automatically.`,
+      { cause: hireError },
+    );
   }
 
   return {
