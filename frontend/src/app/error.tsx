@@ -2,7 +2,9 @@
 
 import { useEffect } from "react";
 import { RefreshCw } from "lucide-react";
+import Link from "next/link";
 
+import { Shell } from "@/components/site/layout";
 import { Button } from "@/components/ui/button";
 
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {
@@ -11,7 +13,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
   }, [error]);
 
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
+    <Shell><div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center" role="alert">
       <p className="num text-[11px] tracking-[0.18em] text-brass uppercase">AgentDesk</p>
       <h1 className="mt-4 text-2xl font-extrabold text-foreground">This page did not load</h1>
       <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
@@ -23,9 +25,9 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
           Try again
         </Button>
         <Button variant="steel" size="lg" asChild>
-          <a href="/marketplace">Go to marketplace</a>
+          <Link href="/marketplace">Go to marketplace</Link>
         </Button>
       </div>
-    </div>
+    </div></Shell>
   );
 }

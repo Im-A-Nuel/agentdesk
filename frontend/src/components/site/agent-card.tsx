@@ -7,7 +7,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
   return (
     <Link
       href={`/agent/${agent.id}`}
-      className="agent-card panel hairline-hover group relative flex h-full flex-col overflow-hidden p-5"
+      className="agent-card panel hairline-hover group relative flex h-full flex-col overflow-hidden p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       <div className="flex items-start justify-between gap-3">
         <div>

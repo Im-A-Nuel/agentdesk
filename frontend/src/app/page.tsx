@@ -3,11 +3,12 @@ import Link from "next/link";
 import { ArrowRight, Check, ExternalLink, Fingerprint, KeyRound, ShieldCheck } from "lucide-react";
 
 import { AgentCard } from "@/components/site/agent-card";
+import { FlowCarousel } from "@/components/site/flow-carousel";
 import { Shell } from "@/components/site/layout";
 import { Reveal } from "@/components/site/reveal";
 import { Button } from "@/components/ui/button";
 import { listAgents } from "@/lib/agents-repo";
-import { steps, triad } from "@/lib/content";
+import { triad } from "@/lib/content";
 
 export const dynamic = "force-dynamic";
 
@@ -122,17 +123,7 @@ export default async function LandingPage() {
               <p className="num text-xs text-muted-foreground">4 steps / 2 public transactions / 1 revocable key</p>
             </div>
           </Reveal>
-          <div className="flow-carousel mt-14" role="region" aria-label="Agent hiring flow">
-            <div className="flow-carousel-track">
-              {[...steps, ...steps].map((step, index) => (
-                <article key={`${step.n}-${index}`} aria-hidden={index >= steps.length} className={`flow-card group p-6 sm:p-7 ${index >= steps.length ? "flow-card-duplicate" : ""}`}>
-                  <div className="flex items-center justify-between"><span className="num text-xs font-bold text-brass">{step.n}</span><span className="flow-icon"><step.icon className="h-5 w-5" strokeWidth={1.8} /></span></div>
-                  <h3 className="mt-12 text-xl font-bold">{step.title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{step.body}</p>
-                </article>
-              ))}
-            </div>
-          </div>
+          <FlowCarousel />
           <Reveal delay={120}>
             <div className="cta-ledger mt-14 grid gap-7 px-6 py-8 sm:px-9 lg:grid-cols-[1fr_auto] lg:items-center">
               <div className="flex gap-5">

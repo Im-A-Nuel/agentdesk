@@ -110,16 +110,19 @@ export function SiteHeader() {
         <div className="flex items-center gap-9">
           <Wordmark />
           <nav className="hidden items-center gap-1 text-[14px] font-semibold md:flex">
-            {nav.map((n) => (
+            {nav.map((n) => {
+              const active = pathname === n.href || (n.href === "/marketplace" && pathname.startsWith("/agent/"));
+              return (
               <Link
                 key={n.href}
                 href={n.href}
-                aria-current={pathname === n.href ? "page" : undefined}
-                className={cn(navLinkClass, pathname === n.href && "text-foreground")}
+                aria-current={active ? "page" : undefined}
+                className={cn(navLinkClass, active && "bg-accent text-foreground")}
               >
                 {n.label}
               </Link>
-            ))}
+              );
+            })}
           </nav>
         </div>
         <div className="flex items-center gap-2.5">
@@ -144,7 +147,12 @@ export function SiteHeader() {
         <div className="border-t border-border bg-background px-5 py-4 md:hidden">
           <nav className="flex flex-col gap-1 text-[15px] font-semibold">
             {nav.map((n) => (
-              <MobileLink key={n.href} href={n.href} onNavigate={closeMenu}>
+              <MobileLink
+                key={n.href}
+                href={n.href}
+                active={pathname === n.href || (n.href === "/marketplace" && pathname.startsWith("/agent/"))}
+                onNavigate={closeMenu}
+              >
                 {n.label}
               </MobileLink>
             ))}
@@ -157,18 +165,24 @@ export function SiteHeader() {
 
 function MobileLink({
   href,
+  active,
   onNavigate,
   children,
 }: {
   href: string;
+  active: boolean;
   onNavigate: () => void;
   children: ReactNode;
 }) {
   return (
     <Link
       href={href}
+      aria-current={active ? "page" : undefined}
       onClick={onNavigate}
-      className="cursor-pointer rounded-lg px-3 py-2.5 text-foreground/85 transition-colors duration-300 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      className={cn(
+        "cursor-pointer rounded-lg px-3 py-2.5 text-foreground/85 transition-colors duration-300 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+        active && "bg-accent text-foreground",
+      )}
     >
       {children}
     </Link>

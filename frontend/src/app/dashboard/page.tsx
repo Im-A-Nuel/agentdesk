@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowUpRight, KeyRound, Loader2, RefreshCw, ShieldOff, Wallet } from "lucide-react";
+import { ArrowUpRight, Check, KeyRound, Loader2, RefreshCw, ShieldOff, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -33,6 +33,7 @@ export default function Dashboard() {
   const [rows, setRows] = useState<HireWithLive[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [openingWallet, setOpeningWallet] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [pendingRevoke, setPendingRevoke] = useState<HireWithLive | null>(null);
@@ -107,11 +108,14 @@ export default function Dashboard() {
   };
 
   const connectAltana = async () => {
+    setOpeningWallet(true);
     try {
       const wallet = await openAltanaWallet();
       setAddress(wallet.address);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not open Altana wallet");
+    } finally {
+      setOpeningWallet(false);
     }
   };
 
@@ -139,12 +143,12 @@ export default function Dashboard() {
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-2.5">
+              {isConnected && <div className="flex items-center gap-2.5">
                 <Button variant="steel" onClick={reRead} disabled={!isConnected || syncing}>
                   <RefreshCw className={syncing ? "animate-spin" : ""} />
                   {syncing ? "Reading keystore" : "Re-read keystore"}
                 </Button>
-              </div>
+              </div>}
             </div>
           </Reveal>
 
@@ -160,7 +164,7 @@ export default function Dashboard() {
                 <Summary
                   label="Combined daily limits"
                   value={totalCap}
-                  format={(n) => `$${n.toLocaleString("en-US")}`}
+                  format={(n) => `${n.toLocaleString("en-US")} test $U`}
                 />
               </div>
             </Reveal>
@@ -169,18 +173,19 @@ export default function Dashboard() {
       </div>
 
       <div className="mx-auto max-w-[1240px] space-y-5 px-5 py-14">
-        {!isConnected && <NotConnected onConnect={connectAltana} />}
+        {!isConnected && <NotConnected onConnect={connectAltana} opening={openingWallet} />}
 
         {isConnected && loading && (
-          <div className="space-y-5">
+          <div className="space-y-5" role="status">
+            <span className="sr-only">Loading permission ledger</span>
             {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="panel h-48 animate-pulse" />
+              <div key={i} className="panel h-48 animate-pulse" aria-hidden="true" />
             ))}
           </div>
         )}
 
         {isConnected && !loading && error && (
-          <div className="panel p-10 text-center">
+          <div className="panel p-10 text-center" role="alert">
             <p className="text-sm font-semibold text-foreground">Keystore could not be read</p>
             <p className="mt-2 text-sm text-muted-foreground">{error}</p>
             <Button variant="steel" size="sm" className="mt-5" onClick={() => address && load(address)}>
@@ -214,7 +219,7 @@ export default function Dashboard() {
               ? "destructive"
               : "outline";
           return (
-            <Reveal key={h.id} delay={i * 80}>
+            <Reveal key={h.id} delay={Math.min(i, 5) * 45}>
               <article
                 className={`panel overflow-hidden transition-shadow duration-300 ${
                   isActive ? "shadow-panel" : ""
@@ -224,10 +229,10 @@ export default function Dashboard() {
                   <div className="flex flex-wrap items-center gap-3">
                     <span
                       className={`h-2 w-2 rounded-full ${
-                        isActive ? "bg-live" : "bg-destructive"
+                        isActive ? "bg-live" : h.status === "revoked" ? "bg-destructive" : "bg-muted-foreground"
                       }`}
                     />
-                    <h2 className="font-display text-lg font-semibold">{agent?.name}</h2>
+                    <h2 className="font-display text-lg font-semibold">{agent?.name ?? "Unknown agent"}</h2>
                     {agent && (
                       <Badge
                         variant={categoryBadgeVariant(agent.category)}
@@ -253,19 +258,17 @@ export default function Dashboard() {
                         </Link>
                       </Button>
                     )}
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      disabled={!isActive || isRevoking}
-                      onClick={() => setPendingRevoke(h)}
-                    >
-                      {isRevoking ? (
-                        <Loader2 className="animate-spin" />
-                      ) : (
-                        <ShieldOff />
-                      )}
-                      {isRevoking ? "Revoking..." : isActive ? "Revoke onchain" : "Revoked"}
-                    </Button>
+                    {isActive && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={isRevoking}
+                        onClick={() => setPendingRevoke(h)}
+                      >
+                        {isRevoking ? <Loader2 className="animate-spin" /> : <ShieldOff />}
+                        {isRevoking ? "Revoking..." : "Revoke onchain"}
+                      </Button>
+                    )}
                   </div>
                 </header>
 
@@ -339,19 +342,40 @@ export default function Dashboard() {
   );
 }
 
-function NotConnected({ onConnect }: { onConnect: () => void }) {
+function NotConnected({ onConnect, opening }: { onConnect: () => void; opening: boolean }) {
+  const assurances = [
+    "Loading the ledger does not sign a transaction",
+    "Your passkey recovers the same smart wallet",
+    "Only you can approve an onchain revoke",
+  ];
+
   return (
-    <div className="panel p-12 text-center">
-      <Wallet className="mx-auto h-6 w-6 text-brass" />
-      <p className="mt-4 text-base font-semibold text-foreground">Open your Altana wallet</p>
-      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-        Your passkey recovers the same smart wallet address. Reading the dashboard does not move
-        funds or change a session.
-      </p>
-      <Button variant="brass" size="lg" className="mt-6" onClick={onConnect}>
-        <KeyRound />
-        Open Altana wallet
-      </Button>
+    <div className="panel grid overflow-hidden lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="p-8 sm:p-12">
+        <span className="grid h-12 w-12 place-items-center rounded-xl bg-brass/10 text-brass">
+          <Wallet className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <p className="mt-6 text-2xl font-semibold text-foreground">Open your permission ledger</p>
+        <p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">
+          Recover your Altana smart wallet to inspect active, expired, and revoked sessions in one place.
+        </p>
+        <Button variant="brass" size="lg" className="mt-7" disabled={opening} onClick={onConnect}>
+          {opening ? <Loader2 className="animate-spin" /> : <KeyRound />}
+          {opening ? "Opening wallet" : "Open Altana wallet"}
+        </Button>
+      </div>
+      <div className="flex items-center border-t border-border bg-panel p-8 sm:p-10 lg:border-t-0 lg:border-l">
+        <ul className="w-full space-y-5">
+          {assurances.map((assurance) => (
+            <li key={assurance} className="flex items-start gap-3 text-sm leading-6 text-foreground/80">
+              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-live/10 text-live">
+                <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" />
+              </span>
+              {assurance}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -385,7 +409,7 @@ function Field({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-border pb-2">
       <dt className="text-muted-foreground">{k}</dt>
-      <dd className="num text-foreground">{v}</dd>
+      <dd className="num min-w-0 text-right text-foreground">{v}</dd>
     </div>
   );
 }

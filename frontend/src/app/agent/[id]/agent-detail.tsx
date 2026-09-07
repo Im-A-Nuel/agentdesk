@@ -326,7 +326,7 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
 
             <div className="space-y-7 px-6 py-6">
               {orphanSession && (
-                <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4">
+                <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4" role="alert">
                   <p className="text-sm font-semibold text-destructive">Session cleanup required</p>
                   <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
                     A previous job failed after its session was granted. Revoke that leftover key before starting another hire.
@@ -342,13 +342,13 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
               )}
 
               {pendingHire && !granted && (
-                <div className="rounded-lg border border-warn/40 bg-warn/10 p-4 text-xs leading-relaxed text-muted-foreground">
+                <div className="rounded-lg border border-warn/40 bg-warn/10 p-4 text-xs leading-relaxed text-muted-foreground" role="status">
                   The onchain job is already confirmed. Retry below to save it to the dashboard. No new transaction will be signed.
                 </div>
               )}
 
               <div>
-                <div className="flex items-end justify-between">
+                <div className="flex flex-wrap items-end justify-between gap-3">
                   <label className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Coins className="h-3.5 w-3.5 text-brass" />
                     Daily spend limit
@@ -356,6 +356,7 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                   <span className="num text-xl">{cap.toLocaleString("en-US")} test $U</span>
                 </div>
                 <Slider
+                  aria-label="Daily spend limit"
                   className="mt-4"
                   value={[cap]}
                   min={100}
@@ -384,13 +385,15 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                   {durations.map((d) => (
                     <button
                       key={d}
+                      type="button"
+                      aria-pressed={days === d}
                       onClick={() => {
                         setDays(d);
                         setGranted(false);
                         setHireResult(null);
                         setHireError(null);
                       }}
-                      className={`num cursor-pointer rounded-md border py-2 text-xs transition-all duration-300 ease-instrument disabled:cursor-not-allowed disabled:opacity-50 ${
+                      className={`num min-h-11 cursor-pointer rounded-md border py-2 text-xs transition-all duration-300 ease-instrument disabled:cursor-not-allowed disabled:opacity-50 ${
                         days === d
                           ? "border-brass/50 bg-brass/12 text-brass"
                           : "border-border bg-panel text-muted-foreground hover:border-border-strong hover:text-foreground"
@@ -433,7 +436,7 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                       <CopyButton value={altanaAddress} label="Copy Altana wallet address" />
                     </p>
                     {balances && (
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
+                      <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
                         <p className={`rounded-md border px-2.5 py-2 ${hasGas ? "border-live/30 text-live" : "border-warn/40 text-warn"}`}>
                           <span className="block font-semibold">Gas {hasGas ? "ready" : "needed"}</span>
                           <span className="num">{Number(balances.native).toFixed(4)} tBNB</span>
@@ -454,6 +457,7 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                       <Button
                         variant="steel"
                         size="sm"
+                        aria-busy={claimingTokens}
                         disabled={!altanaWallet || claimingTokens}
                         onClick={claimTokens}
                       >
@@ -476,6 +480,7 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                 variant={granted ? "outline" : "brass"}
                 size="lg"
                 className="w-full"
+                aria-busy={hiring || preparingWallet}
                 disabled={hiring || preparingWallet || granted || Boolean(orphanSession)}
                 onClick={handleHire}
               >
@@ -513,7 +518,7 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
               </Button>
 
               {hireError && (
-                <p className="rounded-lg border border-destructive/40 bg-destructive/12 px-3 py-2 text-xs text-destructive">
+                <p className="rounded-lg border border-destructive/40 bg-destructive/12 px-3 py-2 text-xs text-destructive" role="alert">
                   {hireError}
                 </p>
               )}
@@ -523,7 +528,7 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
                   granted ? "max-h-80 opacity-100" : "max-h-0 opacity-0"
                 }`}
               >
-                <div className="panel-inset space-y-2.5 p-4">
+                <div className="panel-inset space-y-2.5 p-4" role="status">
                   <p className="flex items-center gap-2 text-xs text-live">
                     <span className="h-1.5 w-1.5 rounded-full bg-live" />
                     Session and job confirmed onchain

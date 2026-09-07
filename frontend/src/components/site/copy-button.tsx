@@ -11,7 +11,7 @@ export function CopyButton({ value, label }: { value: string; label?: string }) 
     <button
       type="button"
       aria-label={label ?? "Copy to clipboard"}
-      className="inline-flex cursor-pointer text-muted-foreground transition-colors duration-300 hover:text-brass"
+      className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors duration-200 hover:bg-accent hover:text-brass focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       onClick={async (e) => {
         e.preventDefault();
         e.stopPropagation();

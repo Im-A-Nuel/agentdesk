@@ -17,6 +17,11 @@ export function Reveal({ children, delay = 0, className, as = "div" }: RevealPro
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
+    if (!("IntersectionObserver" in window)) {
+      setShown(true);
+      return;
+    }
+    const fallback = window.setTimeout(() => setShown(true), 3000);
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -29,7 +34,10 @@ export function Reveal({ children, delay = 0, className, as = "div" }: RevealPro
       { rootMargin: "-8% 0px -8% 0px" },
     );
     observer.observe(node);
-    return () => observer.disconnect();
+    return () => {
+      window.clearTimeout(fallback);
+      observer.disconnect();
+    };
   }, []);
 
   const Tag = as as "div";

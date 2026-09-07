@@ -172,6 +172,13 @@
   }
 }
 
+@media (scripting: none) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @utility panel {
   background: var(--color-card);
   border: 1px solid var(--color-border);
@@ -504,9 +511,34 @@
   will-change: transform;
 }
 
-.flow-carousel:hover .flow-carousel-track {
+.flow-carousel-group:hover .flow-carousel-track {
   animation-play-state: paused;
 }
+
+.flow-carousel-group:focus-within .flow-carousel-track,
+.flow-carousel-paused {
+  animation-play-state: paused;
+}
+
+.flow-carousel-control {
+  display: inline-flex;
+  min-height: 2.75rem;
+  cursor: pointer;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  padding: 0.55rem 0.85rem;
+  color: var(--color-foreground);
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.flow-carousel-control:hover { border-color: var(--color-brass); background: var(--color-accent); }
+.flow-carousel-control:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }
+.flow-carousel-control svg { width: 0.9rem; height: 0.9rem; }
 
 .flow-card {
   position: relative;
@@ -602,4 +634,5 @@
   .flow-carousel-track { animation: none; }
   .flow-card { scroll-snap-align: start; }
   .flow-card-duplicate { display: none; }
+  .flow-carousel-control { display: none; }
 }
