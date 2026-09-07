@@ -89,9 +89,15 @@ export function AgentDetail({ agent, related }: { agent: Agent; related: Agent[]
   const onchainErrorMessage = (error: unknown, action: "claim" | "hire") => {
     const message = error instanceof Error ? error.message : `Could not ${action}`;
     if (message.includes("An error occurred while executing calls") || message.includes("Reason: 0x")) {
-      return action === "claim"
-        ? "Claim could not be sent. Fund this exact wallet with BSC testnet tBNB, then try again."
-        : "Hire is not ready. Fund this exact wallet with tBNB, then claim at least 0.1 test $U before hiring.";
+      if (action === "claim") {
+        return hasGas
+          ? "The token faucet did not return a transaction result. Check the wallet balance before retrying."
+          : "Claim could not be sent. Fund this exact wallet with BSC testnet tBNB, then try again.";
+      }
+      if (!hasGas || !hasHireBudget) {
+        return "Hire is not ready. Fund this exact wallet with tBNB, then claim at least 0.1 test $U before hiring.";
+      }
+      return "The ERC-8183 contract rejected the hire even though this wallet is funded. The session was revoked automatically and no job was created.";
     }
     return message;
   };
